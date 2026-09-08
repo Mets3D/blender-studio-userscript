@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Blender Studio Admin: UX Tweaks
 // @namespace    https://studio.blender.org/
-// @version      2.17
+// @version      2.22
 // @description  Collapsible panels, tab-not-popup links, Preview panel, entry cleanup for the Django admin
 // @match        https://studio.blender.org/admin/*
 // @grant        none
@@ -168,7 +168,21 @@
 
     if (historyLink && submitRow) {
       historyLink.classList.add('button');
-      submitRow.appendChild(historyLink);
+      const addAnotherBtn = submitRow.querySelector('input[name="_addanother"]');
+      if (addAnotherBtn) {
+        // .historylink carries Django's own padding/margin/line-height, tuned for its original
+        // top-of-page spot, which doesn't match the other submit-row buttons once moved here -
+        // copy the real computed values from a known-correct sibling instead of guessing at them.
+        const ref = getComputedStyle(addAnotherBtn);
+        historyLink.style.padding = ref.padding;
+        historyLink.style.margin = ref.margin;
+        historyLink.style.lineHeight = ref.lineHeight;
+        historyLink.style.fontSize = ref.fontSize;
+        historyLink.style.verticalAlign = ref.verticalAlign;
+        addAnotherBtn.insertAdjacentElement('afterend', historyLink);
+      } else {
+        submitRow.appendChild(historyLink);
+      }
     }
     if (viewSiteLink && nav) {
       viewSiteLink.classList.add('button');
@@ -288,11 +302,146 @@
     }
   }
 
+  function cleanupFileInputs() {
+    document.querySelectorAll('input[type="file"]').forEach((input) => {
+      if (input.dataset.usCleaned) return;
+      input.dataset.usCleaned = 'true';
+
+      // Drop the literal "Change:" text Django prints before the input for already-populated
+      // fields.
+      const prev = input.previousSibling;
+      if (prev && prev.nodeType === Node.TEXT_NODE && /change:\s*$/i.test(prev.textContent)) {
+        prev.remove();
+      }
+
+      // The native "No file chosen"/"No file selected." placeholder isn't a stylable DOM node -
+      // it's rendered by the browser itself. Hide the real input (still functional, still
+      // submits normally) behind our own button + a filename label we control directly.
+      const wrapper = document.createElement('span');
+      wrapper.className = 'us-file-input-wrapper';
+
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'button';
+      button.textContent = 'Choose file';
+      button.addEventListener('click', () => input.click());
+
+      const filenameLabel = document.createElement('span');
+      filenameLabel.className = 'us-file-input-name';
+
+      function updateLabel() {
+        filenameLabel.textContent = input.files.length ? input.files[0].name : '';
+      }
+      input.addEventListener('change', updateLabel);
+
+      input.classList.add('us-native-file-input');
+      input.insertAdjacentElement('beforebegin', wrapper);
+      wrapper.append(button, filenameLabel, input);
+      updateLabel();
+    });
+  }
+
+  function hideAssetViewLink() {
+    // Redundant with "View on site", which is now always visible in the pinned header.
+    document.querySelector('.fieldBox.field-view_link')?.parentElement?.remove();
+  }
+
+  function hideDeleteRelatedLinks() {
+    document.querySelectorAll('a.related-widget-wrapper-link.delete-related').forEach((a) => {
+      a.classList.add('us-artist-hidden');
+    });
+  }
+
+  function renameAssetCheckboxLabels() {
+    const renames = {
+      id_is_published: 'Published',
+      id_is_featured: 'Featured',
+      id_is_spoiler: 'Spoiler',
+      id_contains_blend_file: 'Contains .blend',
+    };
+    Object.entries(renames).forEach(([id, text]) => {
+      const label = document.querySelector(`label[for="${id}"]`);
+      if (label) label.textContent = text;
+    });
+    document.getElementById('id_contains_blend_file_helptext')?.remove();
+  }
+
+  function cleanupTagsHelp() {
+    const help = document.getElementById('id_tags_helptext');
+    const container = help?.querySelector(':scope > div');
+    const tagLink = container?.querySelector('a[href="/admin/taggit/tag/"]');
+    if (!container || !tagLink) return;
+
+    // Strip the "Only existing tags can be selected here..." sentence (and the blank line
+    // before it) that leads into the link, keeping the "Start typing..." instructions above it.
+    let node = tagLink.previousSibling;
+    while (node) {
+      const prev = node.previousSibling;
+      const isTargetText = node.nodeType === Node.TEXT_NODE && /only existing tags/i.test(node.textContent);
+      const isBr = node.nodeType === Node.ELEMENT_NODE && node.tagName === 'BR';
+      const isWhitespace = node.nodeType === Node.TEXT_NODE && !node.textContent.trim();
+      if (isTargetText) {
+        node.remove();
+        break;
+      }
+      if (isBr || isWhitespace) {
+        node.remove();
+        node = prev;
+        continue;
+      }
+      break;
+    }
+
+    tagLink.textContent = 'Manage Tags';
+    tagLink.classList.add('button');
+  }
+
+  function cleanupDatePublished() {
+    const p = document.querySelector('.form-row.field-date_published p.datetime');
+    const dateInput = p?.querySelector('#id_date_published_0');
+    const timeInput = p?.querySelector('#id_date_published_1');
+    if (!p || !dateInput || !timeInput) return;
+
+    // "Date:" is redundant with the "Date published:" field label right next to it.
+    const dateLabelText = dateInput.previousSibling;
+    if (dateLabelText && dateLabelText.nodeType === Node.TEXT_NODE && /date:\s*$/i.test(dateLabelText.textContent)) {
+      dateLabelText.remove();
+    }
+
+    // Wrap the whole "Time: <input> <shortcuts>" line, plus the <br> and blank line separating
+    // it from the date line, so it can be hidden as a unit under Artist Mode.
+    const timeLabelText = timeInput.previousSibling;
+    if (timeLabelText && timeLabelText.nodeType === Node.TEXT_NODE) {
+      const br = timeLabelText.previousSibling?.nodeType === Node.ELEMENT_NODE && timeLabelText.previousSibling.tagName === 'BR'
+        ? timeLabelText.previousSibling
+        : null;
+      const blankLine = br && br.previousSibling?.nodeType === Node.TEXT_NODE && !br.previousSibling.textContent.trim()
+        ? br.previousSibling
+        : null;
+      const timeShortcuts = timeInput.nextSibling;
+
+      const span = document.createElement('span');
+      span.className = 'us-artist-hidden';
+      p.insertBefore(span, blankLine || br || timeLabelText);
+      if (blankLine) span.appendChild(blankLine);
+      if (br) span.appendChild(br);
+      span.append(timeLabelText, timeInput);
+      if (timeShortcuts) span.appendChild(timeShortcuts);
+    }
+  }
+
   function hideTopLevelAuthor() {
     // Scoped via the "id_author" label specifically, since each entry's own author field
     // (log_entries-N-author) shares the same "field-author" form-row class.
     const row = document.querySelector('label[for="id_author"]')?.closest('.form-row');
     if (row) row.classList.add('us-artist-hidden');
+  }
+
+  function cleanupProductionLogEntryFields() {
+    if (!location.pathname.includes('/projects/productionlogentry/')) return;
+    ['field-production_log', 'field-user', 'field-date_created', 'field-legacy_id'].forEach((cls) => {
+      document.querySelector(`.form-row.${cls}`)?.classList.add('us-artist-hidden');
+    });
   }
 
   function simplifySaveButtons() {
@@ -426,6 +575,13 @@
       .us-entry-panel > h3.us-collapsible-heading .delete {
         margin-left: auto;
       }
+      #log_entries-group h2 {
+        text-transform: none;
+      }
+      .form-row.field-is_published.field-is_featured.field-is_spoiler .form-multiline {
+        flex-direction: column;
+        align-items: flex-start;
+      }
       a.inlinechangelink {
         background: none !important;
         text-indent: 0 !important;
@@ -547,11 +703,31 @@
       .us-toggle-input:checked + .us-toggle-track .us-toggle-thumb {
         transform: translateX(16px);
       }
+      .us-file-input-wrapper {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .us-native-file-input {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        opacity: 0;
+        overflow: hidden;
+      }
       .us-artist-hidden {
         display: none;
       }
       body.us-dev-mode .us-artist-hidden {
         display: revert;
+      }
+      /* "display: revert" rolls back to the browser default (block for a div), skipping
+         Django's own author-level ".flex-container { display: flex; }" - the other hidden
+         fields are plain block .form-row divs so that's harmless, but this one IS a flex
+         container itself, so it needs an explicit override instead. */
+      body.us-dev-mode .fieldBox.field-render_thumbnails.us-artist-hidden {
+        display: flex;
       }
     `;
     document.head.appendChild(style);
@@ -569,7 +745,14 @@
     safe(injectStyles);
     safe(reorganizePreviewPanel);
     safe(cleanupPreviewFields);
+    safe(cleanupFileInputs);
+    safe(hideAssetViewLink);
+    safe(hideDeleteRelatedLinks);
+    safe(renameAssetCheckboxLabels);
+    safe(cleanupTagsHelp);
+    safe(cleanupDatePublished);
     safe(hideTopLevelAuthor);
+    safe(cleanupProductionLogEntryFields);
     safe(hideRedundantPageTitle);
     safe(initArtistModeToggle);
     safe(initTopLevelPanels);
