@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Blender Studio Admin: UX Tweaks
 // @namespace    https://studio.blender.org/
-// @version      2.22
+// @version      2.24
 // @description  Collapsible panels, tab-not-popup links, Preview panel, entry cleanup for the Django admin
 // @match        https://studio.blender.org/admin/*
 // @grant        none
@@ -254,6 +254,7 @@
             if (node.nodeType === 1 && node.classList.contains('inline-related')) {
               processEntry(node);
               checkboxifyAssetSelectors();
+              augmentAddAssetLinks();
             }
           });
         }
@@ -363,7 +364,15 @@
       const label = document.querySelector(`label[for="${id}"]`);
       if (label) label.textContent = text;
     });
-    document.getElementById('id_contains_blend_file_helptext')?.remove();
+
+    // Restore the removed help text as a hover tooltip on the whole checkbox row, rather than
+    // dropping it entirely.
+    const helpText = document.getElementById('id_contains_blend_file_helptext');
+    const checkboxRow = document.querySelector('label[for="id_contains_blend_file"]')?.closest('.checkbox-row');
+    if (helpText && checkboxRow) {
+      checkboxRow.title = helpText.textContent.trim();
+    }
+    helpText?.remove();
   }
 
   function cleanupTagsHelp() {
@@ -374,6 +383,7 @@
 
     // Strip the "Only existing tags can be selected here..." sentence (and the blank line
     // before it) that leads into the link, keeping the "Start typing..." instructions above it.
+    let removedText = '';
     let node = tagLink.previousSibling;
     while (node) {
       const prev = node.previousSibling;
@@ -381,6 +391,7 @@
       const isBr = node.nodeType === Node.ELEMENT_NODE && node.tagName === 'BR';
       const isWhitespace = node.nodeType === Node.TEXT_NODE && !node.textContent.trim();
       if (isTargetText) {
+        removedText = node.textContent.trim();
         node.remove();
         break;
       }
@@ -394,6 +405,9 @@
 
     tagLink.textContent = 'Manage Tags';
     tagLink.classList.add('button');
+    if (removedText) {
+      tagLink.title = removedText.replace(/\s+at\s*$/, ' here.');
+    }
   }
 
   function cleanupDatePublished() {
@@ -524,6 +538,66 @@
     selector.insertAdjacentElement('afterend', list);
   }
 
+  function augmentAddAssetLinks() {
+    // Tag "Add another asset" links with our own custom params (not real field names, so
+    // Django's own GET-param initial-data logic just ignores them) - read on the asset add
+    // page itself and applied directly via JS, sidestepping Django's initial-data handling for
+    // the split date/time widget, which crashes if handed a plain string via that mechanism.
+    const projectValue = document.querySelector('#id_project')?.value;
+    const startDateValue = document.querySelector('#id_start_date')?.value;
+
+    let earlierDate = null;
+    if (startDateValue) {
+      const d = new Date(startDateValue + 'T00:00:00');
+      if (!isNaN(d)) {
+        d.setDate(d.getDate() - 3);
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        earlierDate = `${y}-${m}-${day}`;
+      }
+    }
+
+    document.querySelectorAll('.related-widget-wrapper[data-model-ref="asset"] a.add-related').forEach((a) => {
+      if (a.dataset.usAugmented) return;
+      a.dataset.usAugmented = 'true';
+      const url = new URL(a.href, location.origin);
+      if (projectValue) url.searchParams.set('_us_project', projectValue);
+      url.searchParams.set('_us_category', 'artwork');
+      url.searchParams.set('_us_is_published', '1');
+      if (earlierDate) url.searchParams.set('_us_date', earlierDate);
+      a.href = url.toString();
+    });
+  }
+
+  function applyAssetAddDefaults() {
+    if (!location.pathname.includes('/projects/asset/add/')) return;
+    const params = new URLSearchParams(location.search);
+
+    const project = params.get('_us_project');
+    if (project) {
+      const select = document.getElementById('id_project');
+      if (select) select.value = project;
+    }
+
+    const category = params.get('_us_category');
+    if (category) {
+      const select = document.getElementById('id_category');
+      if (select) select.value = category;
+    }
+
+    if (params.get('_us_is_published') === '1') {
+      const checkbox = document.getElementById('id_is_published');
+      if (checkbox) checkbox.checked = true;
+    }
+
+    const date = params.get('_us_date');
+    if (date) {
+      const dateInput = document.getElementById('id_date_published_0');
+      if (dateInput) dateInput.value = date;
+    }
+  }
+
   function checkboxifyAssetSelectors() {
     const wrappers = document.querySelectorAll('.related-widget-wrapper[data-model-ref="asset"]');
     console.log('[us] checkboxifyAssetSelectors: found', wrappers.length, 'asset widget(s), readyState =', document.readyState);
@@ -579,6 +653,18 @@
         text-transform: none;
       }
       .form-row.field-is_published.field-is_featured.field-is_spoiler .form-multiline {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .form-row.field-is_published.field-is_featured.field-is_spoiler {
+        border-bottom: none !important;
+      }
+      .form-row.field-contains_blend_file {
+        border-top: none !important;
+        padding-top: 0 !important;
+      }
+      .form-row.field-project.field-collection .form-multiline,
+      .form-row.field-category.field-tags .form-multiline {
         flex-direction: column;
         align-items: flex-start;
       }
@@ -758,6 +844,8 @@
     safe(initTopLevelPanels);
     safe(initEntries);
     safe(checkboxifyAssetSelectors);
+    safe(augmentAddAssetLinks);
+    safe(applyAssetAddDefaults);
     safe(fixRelatedWidgetLinks);
     safe(simplifySaveButtons);
     safe(relocateObjectTools);
