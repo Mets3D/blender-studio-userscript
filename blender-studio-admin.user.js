@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Blender Studio Admin: UX Tweaks
 // @namespace    https://studio.blender.org/
-// @version      2.24
+// @version      2.28
 // @description  Collapsible panels, tab-not-popup links, Preview panel, entry cleanup for the Django admin
 // @match        https://studio.blender.org/admin/*
 // @grant        none
@@ -667,6 +667,16 @@
       .form-row.field-category.field-tags .form-multiline {
         flex-direction: column;
         align-items: flex-start;
+      }
+      /* Checkbox + label rows don't vertically center by default. */
+      .checkbox-row {
+        align-items: center !important;
+      }
+      /* Even centered as boxes, the label's text glyphs still sit visually lower than the
+         checkbox - nudge the text up directly rather than fighting box alignment further. */
+      .vCheckboxLabel {
+        position: relative;
+        top: -4px;
       }
       a.inlinechangelink {
         background: none !important;
