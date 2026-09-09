@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Blender Studio Admin: UX Tweaks
 // @namespace    https://studio.blender.org/
-// @version      2.44
+// @version      2.45
 // @description  Collapsible panels, tab-not-popup links, Preview panel, entry cleanup for the Django admin
 // @match        https://studio.blender.org/admin/*
 // @grant        none
@@ -391,6 +391,7 @@
       id_is_published: 'Published',
       id_is_featured: 'Featured',
       id_is_spoiler: 'Spoiler',
+      id_is_free: 'Free',
       id_contains_blend_file: 'Contains .blend',
     };
     Object.entries(renames).forEach(([id, text]) => {
@@ -502,9 +503,8 @@
   function cleanupStaticAssetPage() {
     if (!location.pathname.includes('/static_assets/staticasset/')) return;
 
-    // "Is free" -> "Free"; its help and the Author / Contributors help all become tooltips.
-    const freeLabel = document.querySelector('label[for="id_is_free"]');
-    if (freeLabel) freeLabel.textContent = 'Free';
+    // "Is free" -> "Free" is handled globally by shortenCheckboxLabels; its help and the
+    // Author / Contributors help all become tooltips.
     moveHelpToTooltip('id_is_free_helptext', '.form-row.field-is_free .checkbox-row');
     moveHelpToTooltip('id_author_helptext', '.fieldBox.field-author');
     moveHelpToTooltip('id_contributors_helptext', '.fieldBox.field-contributors');
@@ -801,6 +801,23 @@
 
     const group = document.getElementById('chapters-group');
     if (group) rebuildTabularInline(group);
+  }
+
+  function cleanupSectionPage() {
+    const form = document.getElementById('section_form');
+    if (!form) return;
+
+    // Same flat-fieldset layout as /chapter/ (wrapped in .container > .editor-fieldset), so the
+    // same panel treatment applies. static_asset / preview_youtube_link / attachments are all
+    // media, so they group under Attachments; the Markdown help on Text stays put (its links
+    // can't survive a hover tooltip).
+    panelizeForm(form, [
+      ['Content', ['name', 'text']],
+      ['Attachments', ['attachments', 'static_asset', 'preview_youtube_link']],
+      ['Organization', ['chapter', 'index', 'slug', 'is_free', 'is_published',
+        'is_featured', 'tags', 'user']],
+    ]);
+    document.querySelector('#section_form .form-row.field-user')?.classList.add('us-artist-hidden');
   }
 
   function dropRedundantTopSubmitRow() {
@@ -1294,6 +1311,7 @@
     safe(cleanupStaticAssetPage);
     safe(cleanupChapterPage);
     safe(cleanupTrainingPage);
+    safe(cleanupSectionPage);
     safe(hideRedundantPageTitle);
     safe(initArtistModeToggle);
     safe(initTopLevelPanels);
