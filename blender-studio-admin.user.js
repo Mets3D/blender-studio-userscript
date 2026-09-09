@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Blender Studio Admin: UX Tweaks
 // @namespace    https://studio.blender.org/
-// @version      2.45
+// @version      2.49
 // @description  Collapsible panels, tab-not-popup links, Preview panel, entry cleanup for the Django admin
 // @match        https://studio.blender.org/admin/*
 // @grant        none
@@ -295,21 +295,65 @@
     summaryFieldset.parentNode.insertBefore(preview, summaryFieldset);
   }
 
+  function cleanupProductionLogPage() {
+    if (!location.pathname.includes('/projects/productionlog/')) return;
+
+    // reorganizePreviewPanel has already pulled Thumbnail / Youtube link out into their own
+    // "Preview" panel, leaving the "Summary" fieldset holding just Author + Summary. Rename it
+    // to "Production log" and fold in the three fields that otherwise sit loose in a bare
+    // heading-less fieldset at the very top of the form.
+    const panelHeading = Array.from(document.querySelectorAll('#productionlog_form fieldset.module > h2'))
+      .find((h) => h.textContent.trim() === 'Summary');
+    if (!panelHeading) return;
+    const panel = panelHeading.closest('fieldset');
+    panelHeading.textContent = 'Production log';
+
+    const stub = document.querySelector('#productionlog_form .form-row.field-project')?.closest('fieldset');
+    const anchor = panel.querySelector('.form-row');   // Author row - the 3 go in ahead of it
+    ['field-project', 'field-name', 'field-start_date'].forEach((cls) => {
+      const row = document.querySelector(`#productionlog_form .form-row.${cls}`);
+      if (row) panel.insertBefore(row, anchor);
+    });
+    if (stub && stub !== panel && !stub.querySelector('.form-row')) stub.remove();
+
+    // "Production log title" -> "Title", its help text to a hover tooltip.
+    const titleLabel = document.querySelector('label[for="id_name"]');
+    if (titleLabel) titleLabel.textContent = 'Title:';
+    moveHelpToTooltip('id_name_helptext', '.form-row.field-name .flex-container');
+
+    // "Start date" -> "Date", plus a hover hint on the input (it ships no Django help text).
+    const dateLabel = document.querySelector('label[for="id_start_date"]');
+    if (dateLabel) dateLabel.textContent = 'Date:';
+    const dateInput = document.getElementById('id_start_date');
+    if (dateInput) dateInput.title = 'Monday the week after the contents of the production log.';
+  }
+
   function cleanupPreviewFields() {
     const thumbRow = document.querySelector('.form-row.field-thumbnail');
     if (!thumbRow) return;
 
     thumbRow.querySelector('.fieldBox.field-render_thumbnails')?.classList.add('us-artist-hidden');
+  }
 
-    const p = thumbRow.querySelector('p.file-upload');
-    const link = p?.querySelector('a');
-    const currentlyText = p?.childNodes[0];
-    if (p && link && currentlyText && currentlyText.nodeType === Node.TEXT_NODE) {
+  // Django's ClearableFileInput prints "Currently: <link to the raw storage path>" above the
+  // file input of every already-populated file field (Thumbnail, Header, Picture header, ...).
+  // The internal path is dev noise - wrap the "Currently:" prefix and its link so Artist Mode
+  // hides them, leaving the Clear checkbox and the image-preview thumbnail below in place.
+  function hideFileUploadPaths() {
+    document.querySelectorAll('p.file-upload').forEach((p) => {
+      if (p.dataset.usCurrentlyHidden) return;
+      const currentlyText = p.firstChild;
+      const link = p.querySelector('a');
+      if (!link || !currentlyText || currentlyText.nodeType !== Node.TEXT_NODE
+          || !/currently:/i.test(currentlyText.textContent)) {
+        return;
+      }
+      p.dataset.usCurrentlyHidden = 'true';
       const span = document.createElement('span');
       span.className = 'us-artist-hidden';
       p.insertBefore(span, currentlyText);
       span.append(currentlyText, link);
-    }
+    });
   }
 
   function cleanupFileInputs() {
@@ -1048,6 +1092,17 @@
         flex-direction: column !important;
         align-items: flex-start !important;
       }
+      /* Prose textareas (Text, Content, Description, Summary, Excerpt): the admin's responsive
+         stylesheet caps every textarea at max-height:120px once the viewport is under 1024px,
+         and hands the prose fields a grab-bag of fixed widths (48em / 610px / 350px, plus
+         70-85% on /section/ via textarea.css). Let them all fill the row instead and grow as
+         far as they're dragged. !important on width is needed to beat textarea.css. */
+      #content-main .form-row textarea {
+        box-sizing: border-box;
+        width: 100% !important;
+        max-height: none !important;
+        resize: vertical;
+      }
       /* Post panels: keep row separators only where the grouping needs them (Tags | Featured,
          Subscribers only | Date published, Excerpt | Content) and drop the rest. Scoped to our
          own built .us-post-panel, so no other page's rows are affected. */
@@ -1297,8 +1352,10 @@
   function init() {
     safe(injectStyles);
     safe(reorganizePreviewPanel);
+    safe(cleanupProductionLogPage);
     safe(cleanupPostPage);
     safe(cleanupPreviewFields);
+    safe(hideFileUploadPaths);
     safe(cleanupFileInputs);
     safe(hideAssetViewLink);
     safe(hideDeleteRelatedLinks);
