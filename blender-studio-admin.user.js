@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Blender Studio Admin: UX Tweaks
 // @namespace    https://studio.blender.org/
-// @version      2.42
+// @version      2.44
 // @description  Collapsible panels, tab-not-popup links, Preview panel, entry cleanup for the Django admin
 // @match        https://studio.blender.org/admin/*
 // @grant        none
@@ -119,12 +119,17 @@
     });
   }
 
+  // Reflect the stored Artist Mode setting on <body>; returns whether Artist Mode is on.
+  function syncDevModeClass() {
+    const artistMode = localStorage.getItem(ARTIST_MODE_KEY) !== 'off';
+    document.body.classList.toggle('us-dev-mode', !artistMode);
+    return artistMode;
+  }
+
   function initArtistModeToggle() {
-    // Reflect the stored Artist Mode setting on <body> up front, so the dev/artist CSS still
-    // works on pages with no breadcrumbs bar to host the toggle (e.g. related-object popups
-    // like the Collection edit form).
-    const storedArtistMode = localStorage.getItem(ARTIST_MODE_KEY) !== 'off';
-    document.body.classList.toggle('us-dev-mode', !storedArtistMode);
+    // Sync up front so the dev/artist CSS still works on pages with no breadcrumbs bar to host
+    // the toggle (e.g. related-object popups like the Collection edit form).
+    syncDevModeClass();
 
     const nav = document.querySelector('nav[aria-label="Breadcrumbs"]');
     if (!nav || nav.querySelector('.us-artist-mode-toggle')) return;
@@ -145,9 +150,7 @@
     track.appendChild(document.createElement('span')).className = 'us-toggle-thumb';
 
     function render() {
-      const artistMode = localStorage.getItem(ARTIST_MODE_KEY) !== 'off';
-      document.body.classList.toggle('us-dev-mode', !artistMode);
-      checkbox.checked = artistMode;
+      checkbox.checked = syncDevModeClass();
     }
 
     checkbox.addEventListener('change', () => {
@@ -383,7 +386,7 @@
     }
   }
 
-  function renameAssetCheckboxLabels() {
+  function shortenCheckboxLabels() {
     const renames = {
       id_is_published: 'Published',
       id_is_featured: 'Featured',
@@ -558,12 +561,23 @@
     return anchor;
   }
 
+  // Split a change form's single flat fieldset into buildPanels() panels, then either drop the
+  // now-empty stub or (if some unlisted row is left) park it below the panels. No-op if there
+  // is no fieldset or the panels were already built.
+  function panelizeForm(form, specs, extraClass) {
+    const source = form.querySelector('fieldset.module');
+    if (!source || form.querySelector('.us-built-panel')) return;
+    const lastPanel = buildPanels(source, specs, extraClass);
+    if (!source.querySelector('.form-row')) source.remove();
+    else if (lastPanel !== source) lastPanel.insertAdjacentElement('afterend', source);
+  }
+
   function cleanupPostPage() {
     const form = document.getElementById('post_form');
     if (!form) return;
 
     // "Is subscribers only" -> "Subscribers only" (is_featured / is_published are renamed by
-    // renameAssetCheckboxLabels).
+    // shortenCheckboxLabels).
     const subLabel = document.querySelector('label[for="id_is_subscribers_only"]');
     if (subLabel) subLabel.textContent = 'Subscribers only';
 
@@ -571,24 +585,19 @@
     moveHelpToTooltip('id_contributors_helptext', '.fieldBox.field-contributors');
 
     // The post form ships as one long flat fieldset - carve it into our usual collapsible
-    // panels. Every row is accounted for below, so the original fieldset ends up empty.
-    const source = form.querySelector('fieldset.module');
-    if (!source || form.querySelector('.us-built-panel')) return;
-
-    buildPanels(source, [
+    // panels. Every row is accounted for, so the stub fieldset ends up empty and is removed.
+    panelizeForm(form, [
       ['Content', ['title', 'excerpt', 'content']],
       ['Attachments', ['attachments', 'header', 'thumbnail']],
       // "author" is the .form-row.field-author.field-contributors row - it carries both.
       ['Organization', ['slug', 'project', 'training', 'category', 'tags',
         'is_featured', 'is_published', 'is_subscribers_only', 'date_published', 'author']],
     ], 'us-post-panel');
-
-    if (!source.querySelector('.form-row')) source.remove();
   }
 
   // Column-header text of a tabular inline, keyed by the "field-<name>" class used on the body
   // cells, so a rebuilt row can label its fields exactly like Django would.
-  function sectionColumnLabels(group) {
+  function tabularColumnLabels(group) {
     const map = {};
     group.querySelectorAll('thead th').forEach((th) => {
       const cls = [...th.classList].find((c) => c.startsWith('column-'));
@@ -600,7 +609,7 @@
   // Wrap one field's widget in Django's native aligned .form-row inner markup
   // (<div><div class="flex-container"><label> <widget></div></div>) and return the wrapper.
   // Everything in `source` (the widget included) is MOVED into it.
-  function buildSectionFieldInner(source, labelText, widget) {
+  function buildStackedField(source, labelText, widget) {
     const inner = document.createElement('div');
     const flex = document.createElement('div');
     flex.className = 'flex-container';
@@ -623,9 +632,30 @@
     return inner;
   }
 
+  // Move a tabular row's delete control (a DELETE checkbox on saved rows, a "Remove" link on
+  // fresh ones) into a rebuilt panel's <h3>, wrapped like Django's stacked-inline markup.
+  function appendDeleteControl(h3, tr) {
+    const span = document.createElement('span');
+    span.className = 'delete';
+    const cb = tr.querySelector(':scope > td.delete input[type="checkbox"]');
+    const remove = tr.querySelector(':scope > td.delete a.inline-deletelink');
+    if (cb) {
+      const dl = document.createElement('label');
+      dl.className = 'vCheckboxLabel inline';
+      if (cb.id) dl.htmlFor = cb.id;
+      dl.textContent = 'Delete';
+      span.append(cb, ' ', dl);
+    } else if (remove) {
+      span.appendChild(remove);
+    } else {
+      return;
+    }
+    h3.appendChild(span);
+  }
+
   // Collect a row's field cells into one native <fieldset class="module aligned"> of .form-row
   // rows (Django's exact stacked-inline markup). Each td's widget is MOVED into its row.
-  function buildSectionFieldset(fieldTds, labels) {
+  function buildStackedFieldset(fieldTds, labels) {
     const fs = document.createElement('fieldset');
     fs.className = 'module aligned';
     fieldTds.forEach((td) => {
@@ -633,7 +663,7 @@
       const widget = td.querySelector('input, select, textarea');
       const row = document.createElement('div');
       row.className = 'form-row ' + cls;
-      row.appendChild(buildSectionFieldInner(td, labels[cls] || cls.slice(6), widget));
+      row.appendChild(buildStackedField(td, labels[cls] || cls.slice(6), widget));
       fs.appendChild(row);
     });
     return fs;
@@ -643,16 +673,16 @@
   // .module.aligned fieldset of .form-row rows), so it inherits the real admin styling and
   // reads like a production-log entry. The gutted <tr> stays in the table (hidden) carrying
   // its <prefix>-N-id / -<parent> hidden inputs, so Django's bookkeeping is untouched.
-  function buildSectionPanel(tr, labels) {
-    if (tr.dataset.usSection) return;
-    tr.dataset.usSection = 'true';
+  function stackSavedRow(tr, labels) {
+    if (tr.dataset.usStacked) return;
+    tr.dataset.usStacked = 'true';
 
     const orig = tr.querySelector(':scope > td.original');
     const table = tr.closest('table');
     if (!orig || !table) return;
 
     const panel = document.createElement('div');
-    panel.className = 'inline-related has_original us-section us-entry-panel';
+    panel.className = 'inline-related has_original us-stacked-row us-entry-panel';
 
     const h3 = document.createElement('h3');
     const inlineLabel = document.createElement('span');
@@ -662,22 +692,11 @@
     h3.appendChild(inlineLabel);
     const viewLink = inlineLabel.querySelector('a:not(.inlinechangelink)');
     if (viewLink) h3.appendChild(viewLink);
+    appendDeleteControl(h3, tr);
 
-    const cb = tr.querySelector(':scope > td.delete input[type="checkbox"]');
-    if (cb) {
-      const del = document.createElement('span');
-      del.className = 'delete';
-      const dl = document.createElement('label');
-      dl.className = 'vCheckboxLabel inline';
-      if (cb.id) dl.htmlFor = cb.id;
-      dl.textContent = 'Delete';
-      del.append(cb, ' ', dl);
-      h3.appendChild(del);
-    }
-
-    panel.append(h3, buildSectionFieldset([...tr.querySelectorAll(':scope > td[class*="field-"]')], labels));
+    panel.append(h3, buildStackedFieldset([...tr.querySelectorAll(':scope > td[class*="field-"]')], labels));
     table.parentNode.insertBefore(panel, table);
-    tr.classList.add('us-section-tr-hidden');
+    tr.classList.add('us-stacked-shell');
 
     iconifyChangeLink(h3);
     makeCollapsible(panel, h3, location.pathname + '::section::' + tr.id);
@@ -687,10 +706,10 @@
   // the <tr>. Build the same native markup as a saved panel (an <h3> in td.original, one
   // fieldset of .form-row rows parked in the first field cell) so the styling matches exactly;
   // the <tr> itself gets .inline-related + .us-entry-panel to be the panel.
-  function stackNewSectionRow(tr, labels, itemName) {
-    if (tr.dataset.usSection) return;
-    tr.dataset.usSection = 'true';
-    tr.classList.add('inline-related', 'us-section', 'us-entry-panel', 'us-section-new');
+  function stackNewRow(tr, labels, itemName) {
+    if (tr.dataset.usStacked) return;
+    tr.dataset.usStacked = 'true';
+    tr.classList.add('inline-related', 'us-stacked-row', 'us-entry-panel', 'us-stacked-row--new');
 
     const orig = tr.querySelector(':scope > td.original');
     if (!orig) return;
@@ -703,27 +722,21 @@
       label.className = 'inline_label';
       label.textContent = `New ${itemName || 'section'}`;
       h3.appendChild(label);
-      const remove = tr.querySelector(':scope > td.delete a.inline-deletelink');
-      if (remove) {
-        const span = document.createElement('span');
-        span.className = 'delete';
-        span.appendChild(remove);
-        h3.appendChild(span);
-      }
+      appendDeleteControl(h3, tr);
       orig.prepend(h3);
     }
 
     const fieldTds = [...tr.querySelectorAll(':scope > td[class*="field-"]')];
     if (fieldTds[0] && !fieldTds[0].querySelector('fieldset')) {
-      fieldTds[0].appendChild(buildSectionFieldset(fieldTds, labels));
+      fieldTds[0].appendChild(buildStackedFieldset(fieldTds, labels));
     }
 
     makeCollapsible(tr, h3, location.pathname + '::section::' + tr.id);
   }
 
-  function processSectionRow(tr, labels, itemName) {
-    if (tr.classList.contains('has_original')) buildSectionPanel(tr, labels);
-    else stackNewSectionRow(tr, labels, itemName);
+  function stackRow(tr, labels, itemName) {
+    if (tr.classList.contains('has_original')) stackSavedRow(tr, labels);
+    else stackNewRow(tr, labels, itemName);
   }
 
   // Turn a wide tabular inline (Sections on /chapter/, Chapters on /training/) into a column
@@ -739,15 +752,15 @@
       group.querySelectorAll(`tr.dynamic-${prefix}:not(.has_original)`).forEach((tr) => tr.remove());
       total.value = initial.value;
     }
-    const labels = sectionColumnLabels(group);
-    group.querySelectorAll(`tr.dynamic-${prefix}`).forEach((tr) => processSectionRow(tr, labels, itemName));
+    const labels = tabularColumnLabels(group);
+    group.querySelectorAll(`tr.dynamic-${prefix}`).forEach((tr) => stackRow(tr, labels, itemName));
 
     const tbody = group.querySelector('tbody');
     if (!tbody) return;
     new MutationObserver((muts) => {
       muts.forEach((m) => m.addedNodes.forEach((node) => {
         if (node.nodeType === 1 && node.matches && node.matches(`tr.dynamic-${prefix}`)) {
-          processSectionRow(node, labels, itemName);
+          stackRow(node, labels, itemName);
         }
       }));
     }).observe(tbody, { childList: true });
@@ -757,18 +770,11 @@
     const form = document.getElementById('chapter_form');
     if (!form) return;
 
-    const source = form.querySelector('fieldset.module');
-    if (source && !form.querySelector('.us-built-panel')) {
-      const lastPanel = buildPanels(source, [
-        ['Content', ['name', 'description']],
-        ['Attachments', ['picture_header', 'thumbnail']],
-        ['Organization', ['training', 'index', 'slug', 'is_published', 'user']],
-      ]);
-      // Every chapter field is placed above, so the stub fieldset should end up empty; if some
-      // unexpected row is left, park the stub below the panels instead of on top.
-      if (!source.querySelector('.form-row')) source.remove();
-      else if (lastPanel !== source) lastPanel.insertAdjacentElement('afterend', source);
-    }
+    panelizeForm(form, [
+      ['Content', ['name', 'description']],
+      ['Attachments', ['picture_header', 'thumbnail']],
+      ['Organization', ['training', 'index', 'slug', 'is_published', 'user']],
+    ]);
     document.querySelector('#chapter_form .form-row.field-user')?.classList.add('us-artist-hidden');
 
     const group = document.getElementById('sections-group');
@@ -782,17 +788,12 @@
     moveHelpToTooltip('id_description_helptext', '.form-row.field-description .flex-container');
     moveHelpToTooltip('id_show_blog_posts_helptext', '.form-row.field-show_blog_posts .checkbox-row');
 
-    const source = form.querySelector('fieldset.module');
-    if (source && !form.querySelector('.us-built-panel')) {
-      const lastPanel = buildPanels(source, [
-        ['Content', ['name', 'description', 'summary']],
-        ['Attachments', ['picture_header', 'thumbnail', 'preview_video']],
-        ['Organization', ['slug', 'type', 'difficulty', 'tags', 'is_featured', 'is_published',
-          'show_blog_posts', 'date_created', 'date_updated']],
-      ]);
-      if (!source.querySelector('.form-row')) source.remove();
-      else if (lastPanel !== source) lastPanel.insertAdjacentElement('afterend', source);
-    }
+    panelizeForm(form, [
+      ['Content', ['name', 'description', 'summary']],
+      ['Attachments', ['picture_header', 'thumbnail', 'preview_video']],
+      ['Organization', ['slug', 'type', 'difficulty', 'tags', 'is_featured', 'is_published',
+        'show_blog_posts', 'date_created', 'date_updated']],
+    ]);
     // Read-only timestamps are dev noise.
     ['field-date_created', 'field-date_updated'].forEach((cls) => {
       document.querySelector(`#training_form .form-row.${cls}`)?.classList.add('us-artist-hidden');
@@ -997,7 +998,8 @@
         margin-bottom: 15px;
         background: var(--darkened-bg, rgba(0, 0, 0, 0.02));
       }
-      .us-entry-panel > h3 {
+      .us-entry-panel > h3,
+      #content-main .us-tabular-stacked tr.us-stacked-row--new > td.original > h3 {
         margin-top: 0;
       }
       .us-entry-panel > h3.us-collapsible-heading .delete {
@@ -1042,11 +1044,11 @@
          <h3> goes in td.original, and the fields are collected into one native fieldset in
          the first cell. So the only thing to style here is the leftover <table> chrome. */
       #content-main .us-tabular-stacked thead,
-      #content-main .us-tabular-stacked tr.us-section-tr-hidden,
+      #content-main .us-tabular-stacked tr.us-stacked-shell,
       #content-main .us-tabular-stacked tr.empty-form,
-      #content-main .us-tabular-stacked tr.us-section-new > td:empty,
-      #content-main .us-tabular-stacked tr.us-section-new > td.delete,
-      #content-main .us-tabular-stacked tr.us-section-new > td.original > input[type="hidden"] {
+      #content-main .us-tabular-stacked tr.us-stacked-row--new > td:empty,
+      #content-main .us-tabular-stacked tr.us-stacked-row--new > td.delete,
+      #content-main .us-tabular-stacked tr.us-stacked-row--new > td.original > input[type="hidden"] {
         display: none;
       }
       #content-main .us-tabular-stacked table {
@@ -1060,7 +1062,7 @@
       }
       /* The in-place <tr> IS the panel. !important + ID specificity beats Django's tabular
          .row1/.row2 zebra (which otherwise boxes every other row once the <tr> is block). */
-      #content-main .us-tabular-stacked tr.us-section-new {
+      #content-main .us-tabular-stacked tr.us-stacked-row--new {
         display: block;
         width: auto;
         margin: 0 0 15px !important;
@@ -1071,28 +1073,25 @@
         box-shadow: none !important;
         background: var(--darkened-bg, rgba(0, 0, 0, 0.02));
       }
-      #content-main .us-tabular-stacked tr.us-section-new > td {
+      #content-main .us-tabular-stacked tr.us-stacked-row--new > td {
         display: block;
         width: auto;
         border: 0;
         outline: 0;
         padding: 0;
       }
-      #content-main .us-tabular-stacked tr.us-section-new > td.original > h3 {
-        margin-top: 0;
-      }
       /* The <h3> heading lives inside td.original (can't be a direct <tr> child), so keep the
          whole cell visible when the row is collapsed. */
-      #content-main .us-tabular-stacked tr.us-section-new.us-collapsed > td.original {
+      #content-main .us-tabular-stacked tr.us-stacked-row--new.us-collapsed > td.original {
         display: block !important;
       }
-      /* Per-row fields that are dev noise in Artist Mode. .us-section scopes this to rebuilt
+      /* Per-row fields that are dev noise in Artist Mode. .us-stacked-row scopes this to rebuilt
          inline rows (Sections + Chapters); each page only renders the field classes it has. */
-      body:not(.us-dev-mode) .us-section .form-row.field-user,
-      body:not(.us-dev-mode) .us-section .form-row.field-attachments,
-      body:not(.us-dev-mode) .us-section .form-row.field-preview_youtube_link,
-      body:not(.us-dev-mode) .us-section .form-row.field-picture_header,
-      body:not(.us-dev-mode) .us-section .form-row.field-thumbnail {
+      body:not(.us-dev-mode) .us-stacked-row .form-row.field-user,
+      body:not(.us-dev-mode) .us-stacked-row .form-row.field-attachments,
+      body:not(.us-dev-mode) .us-stacked-row .form-row.field-preview_youtube_link,
+      body:not(.us-dev-mode) .us-stacked-row .form-row.field-picture_header,
+      body:not(.us-dev-mode) .us-stacked-row .form-row.field-thumbnail {
         display: none !important;
       }
       /* Collapse the row-to-row gap so Published/Featured/Spoiler and "Contains .blend" read
@@ -1286,7 +1285,7 @@
     safe(cleanupFileInputs);
     safe(hideAssetViewLink);
     safe(hideDeleteRelatedLinks);
-    safe(renameAssetCheckboxLabels);
+    safe(shortenCheckboxLabels);
     safe(cleanupTagsHelp);
     safe(cleanupDatePublished);
     safe(hideTopLevelAuthor);
