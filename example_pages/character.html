@@ -1,0 +1,1349 @@
+<html lang="en-us" dir="ltr" data-theme="auto" class=" edkulxg idc0_350"><head>
+<title>Critter Evolved | Change character | Blender Studio</title>
+<link rel="stylesheet" href="/static/admin/css/base.96c479cedf7a.css">
+
+  <link rel="stylesheet" href="/static/admin/css/dark_mode.1215cee25eaa.css">
+  <script src="/static/admin/js/theme.91cf832f559e.js"></script>
+
+
+<link rel="stylesheet" href="/static/admin/css/forms.85f39c0927fa.css">
+
+
+  
+  
+  <link rel="stylesheet" type="text/css" href="/static/common/admin/fixes.7ec41b220034.css">
+
+  <link rel="stylesheet" type="text/css" href="/static/common/admin/fixes.7ec41b220034.css">
+
+<script src="/admin/jsi18n/"></script>
+<link href="/static/admin/css/vendor/select2/select2.min.9f54e6414f87.css" media="screen" rel="stylesheet">
+<link href="/static/admin/css/autocomplete.d24f10bdee41.css" media="screen" rel="stylesheet">
+<script src="/static/admin/js/vendor/jquery/jquery.min.2c872dbe60f4.js"></script>
+<script src="/static/admin/js/calendar.d64496bbf46d.js"></script>
+<script src="/static/admin/js/vendor/select2/select2.full.min.fcd7500d8e13.js"></script>
+<script src="/static/admin/js/admin/DateTimeShortcuts.9f6e209cebca.js"></script>
+<script src="/static/admin/js/vendor/select2/i18n/en.cf932ba09a98.js"></script>
+<script src="/static/admin/js/jquery.init.b7781a0897fc.js"></script>
+<script src="/static/admin/js/core.7e257fdf56dc.js"></script>
+<script src="/static/admin/js/autocomplete.01591ab27be7.js"></script>
+<script src="/static/admin/js/inlines.89b3c627c5dc.js"></script>
+<script src="/static/admin/js/admin/RelatedObjectLookups.ed6240809a40.js"></script>
+<script src="/static/admin/js/actions.f1d5653edb59.js"></script>
+<script src="/static/admin/js/urlify.ae970a820212.js"></script>
+<script src="/static/admin/js/prepopulate.bd2361dfd64d.js"></script>
+<script src="/static/admin/js/vendor/xregexp/xregexp.min.f1ae4617847c.js"></script>
+
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/admin/css/responsive.80b7f3c4f68f.css">
+    
+
+<meta name="robots" content="NONE,NOARCHIVE">
+<style>
+      .us-collapsible-heading {
+        cursor: pointer;
+        user-select: none;
+        display: flex;
+        align-items: center;
+        gap: .25em;
+      }
+      .us-collapsible-heading:hover {
+        opacity: 0.8;
+      }
+      .us-collapsible.us-collapsed > *:not(.us-collapsible-heading) {
+        display: none !important;
+      }
+      /* Bigger, solider chevron - closer to Django's own native <details> panel marker. */
+      .us-collapse-arrow {
+        display: inline-block;
+        margin-right: 8px;
+        font-size: 1.2em;
+        transition: transform 0.15s ease;
+      }
+      .us-collapsed .us-collapse-arrow {
+        transform: rotate(-90deg);
+      }
+      .us-entry-panel {
+        border: 1px solid var(--border-color, #ccc);
+        border-radius: 6px;
+        padding: 10px 15px;
+        margin-bottom: 15px;
+        background: var(--darkened-bg, rgba(0, 0, 0, 0.02));
+      }
+      .us-entry-panel > h3,
+      #content-main .us-tabular-stacked tr.us-stacked-row--new > td.original > h3 {
+        margin-top: 0;
+      }
+      .us-entry-panel > h3.us-collapsible-heading .delete {
+        margin-left: auto;
+      }
+      /* Django upper-cases every panel heading (fieldset headings, inline-group headings, our
+         own built panels) - drop that. ID-level specificity so it still wins the cascade. The
+         native <details> Metadata panel is untouched (its h2 isn't a direct fieldset child). */
+      #content-main fieldset.module > h2,
+      #content-main .inline-group h2 {
+        text-transform: none;
+      }
+      /* nested_admin's inline groups carry a large vertical margin that leaves an oversized
+         gap between stacked panels (e.g. Video variations -> Video tracks). */
+      #content-main .inline-group {
+        margin: 8px 0 !important;
+      }
+      /* These forms are carved into lots of single-field fieldsets, and Django's stock ~20px
+         gap under every one reads as an oversized band of whitespace below each separator
+         line. Tighten it across all change forms. */
+      #content-main fieldset.module {
+        margin-bottom: 8px !important;
+      }
+      /* Single-column layout everywhere: Django lays multi-field rows out side by side, which
+         is cramped on these forms. Stack every multi-field row so the second field (Parent,
+         Order, Resized/cropped, Thumbnail aspect ratio, Collection, Tags, ...) drops below
+         the first instead of beside it. */
+      .form-row .form-multiline {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+      }
+      /* Prose textareas (Text, Content, Description, Summary, Excerpt): the admin's responsive
+         stylesheet caps every textarea at max-height:120px once the viewport is under 1024px,
+         and hands the prose fields a grab-bag of fixed widths (48em / 610px / 350px, plus
+         70-85% on /section/ via textarea.css). Let them all fill the row instead and grow as
+         far as they're dragged. !important on width is needed to beat textarea.css. */
+      #content-main .form-row textarea {
+        box-sizing: border-box;
+        width: 100% !important;
+        max-height: none !important;
+        resize: vertical;
+      }
+      /* Post panels: keep row separators only where the grouping needs them (Tags | Featured,
+         Subscribers only | Date published, Excerpt | Content) and drop the rest. Scoped to our
+         own built .us-post-panel, so no other page's rows are affected. */
+      .us-post-panel .form-row:not(.field-tags):not(.field-is_subscribers_only):not(.field-excerpt) {
+        border-bottom: none !important;
+      }
+      /* Tabular inlines (Sections on /chapter/, Chapters on /training/): rebuildTabularInline
+         turns each into a column of stacked-inline panels. Saved rows become real
+         .inline-related divs; freshly-added rows are dressed up in place (Django renumbers
+         them, so their widgets have to stay in the <tr>) - the <tr> becomes the panel, an
+         <h3> goes in td.original, and the fields are collected into one native fieldset in
+         the first cell. So the only thing to style here is the leftover <table> chrome. */
+      #content-main .us-tabular-stacked thead,
+      #content-main .us-tabular-stacked tr.us-stacked-shell,
+      #content-main .us-tabular-stacked tr.empty-form,
+      #content-main .us-tabular-stacked tr.us-stacked-row--new > td:empty,
+      #content-main .us-tabular-stacked tr.us-stacked-row--new > td.delete,
+      #content-main .us-tabular-stacked tr.us-stacked-row--new > td.original > input[type="hidden"] {
+        display: none;
+      }
+      #content-main .us-tabular-stacked table {
+        display: block;
+        width: auto;
+      }
+      #content-main .us-tabular-stacked tbody,
+      #content-main .us-tabular-stacked tr.add-row,
+      #content-main .us-tabular-stacked tr.add-row > td {
+        display: block;
+      }
+      /* The in-place <tr> IS the panel. !important + ID specificity beats Django's tabular
+         .row1/.row2 zebra (which otherwise boxes every other row once the <tr> is block). */
+      #content-main .us-tabular-stacked tr.us-stacked-row--new {
+        display: block;
+        width: auto;
+        margin: 0 0 15px !important;
+        padding: 10px 15px;
+        border: 1px solid var(--border-color, #ccc) !important;
+        border-radius: 6px;
+        outline: 0 !important;
+        box-shadow: none !important;
+        background: var(--darkened-bg, rgba(0, 0, 0, 0.02));
+      }
+      #content-main .us-tabular-stacked tr.us-stacked-row--new > td {
+        display: block;
+        width: auto;
+        border: 0;
+        outline: 0;
+        padding: 0;
+      }
+      /* The <h3> heading lives inside td.original (can't be a direct <tr> child), so keep the
+         whole cell visible when the row is collapsed. */
+      #content-main .us-tabular-stacked tr.us-stacked-row--new.us-collapsed > td.original {
+        display: block !important;
+      }
+      /* Per-row fields that are dev noise in Artist Mode. .us-stacked-row scopes this to rebuilt
+         inline rows (Sections + Chapters); each page only renders the field classes it has. */
+      body:not(.us-dev-mode) .us-stacked-row .form-row.field-user,
+      body:not(.us-dev-mode) .us-stacked-row .form-row.field-attachments,
+      body:not(.us-dev-mode) .us-stacked-row .form-row.field-preview_youtube_link,
+      body:not(.us-dev-mode) .us-stacked-row .form-row.field-picture_header,
+      body:not(.us-dev-mode) .us-stacked-row .form-row.field-thumbnail {
+        display: none !important;
+      }
+      /* Collapse the row-to-row gap so Published/Featured/Spoiler and "Contains .blend" read
+         as one group - the next row already zeroes its own padding-top to match. */
+      .form-row.field-is_published.field-is_featured.field-is_spoiler {
+        border-bottom: none !important;
+        padding-bottom: 0 !important;
+      }
+      .form-row.field-contains_blend_file {
+        border-top: none !important;
+        padding-top: 0 !important;
+      }
+      /* Checkbox + label rows don't vertically center by default. */
+      .checkbox-row {
+        align-items: center !important;
+      }
+      /* Even centered as boxes, the label's text glyphs still sit visually lower than the
+         checkbox - nudge the text up directly rather than fighting box alignment further.
+         Scoped to .checkbox-row so it doesn't also shift inline .vCheckboxLabel toggles that
+         live outside a checkbox row (e.g. the "Delete" toggle on log-entry headings). */
+      .checkbox-row .vCheckboxLabel {
+        position: relative;
+        top: -4px;
+      }
+      a.inlinechangelink {
+        background: none !important;
+        text-indent: 0 !important;
+      }
+      a.inlinechangelink img {
+        vertical-align: middle;
+        margin-left: 4px;
+      }
+      .us-asset-checklist {
+        max-height: 240px;
+        overflow-y: auto;
+        border: 1px solid var(--border-color, #ccc);
+        border-radius: 4px;
+        padding: 6px 10px;
+      }
+      .us-asset-checkbox {
+        padding: 3px 0;
+      }
+      /* The site's own CSS has the default/non-default submit button colors backwards -
+         pin down the correct Django convention explicitly rather than rely on their cascade. */
+      .submit-row input.us-save-button {
+        text-transform: none !important;
+        background: var(--default-button-bg, #417690) !important;
+        color: var(--button-fg, #fff) !important;
+      }
+      .submit-row input.us-save-button:hover,
+      .submit-row input.us-save-button:focus {
+        background: var(--default-button-hover-bg, #205067) !important;
+      }
+      .submit-row input[name="_addanother"] {
+        background: var(--button-bg, #79aec8) !important;
+        color: var(--button-fg, #fff) !important;
+      }
+      .submit-row input[name="_addanother"]:hover,
+      .submit-row input[name="_addanother"]:focus {
+        background: var(--button-hover-bg, #417690) !important;
+      }
+      /* #container is height-constrained (likely height:100% for a sticky-footer layout on
+         short pages) with overflow:visible, so long pages visually spill past it without
+         clipping - but that also caps how far position:sticky can pin nav within it. Force it
+         to size to its actual content instead. */
+      #container {
+        height: auto !important;
+      }
+      nav[aria-label="Breadcrumbs"] {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding-right: 20px;
+        background: var(--breadcrumbs-bg, #79aec8);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+      }
+      nav[aria-label="Breadcrumbs"] .breadcrumbs {
+        flex: 1;
+        min-width: 0;
+        order: 1;
+      }
+      /* Header buttons (Artist Mode, View on site, Save) all reuse Django's own generic
+         .button styling via classList, rather than us guessing at colors - this keeps them
+         visually identical to "Save and add another" for free, backwards-color bug included. */
+      .us-artist-mode-toggle {
+        order: 2;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        white-space: nowrap;
+        user-select: none;
+      }
+      nav[aria-label="Breadcrumbs"] a.viewsitelink {
+        order: 3;
+      }
+      .us-header-save-button {
+        order: 4;
+      }
+      /* View on site keeps Django's own more-specific .viewsitelink sizing (tuned for its
+         original corner spot) even with .button added, so it renders smaller than the other
+         two - force all three header buttons to the same explicit size instead of guessing
+         which one is "right". */
+      .us-artist-mode-toggle,
+      nav[aria-label="Breadcrumbs"] a.viewsitelink,
+      .us-header-save-button {
+        padding: 4px 12px !important;
+        font-size: 0.8125rem !important;
+        line-height: 1.5 !important;
+      }
+      .us-toggle-input {
+        position: absolute;
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+      .us-toggle-track {
+        position: relative;
+        display: inline-block;
+        flex-shrink: 0;
+        width: 34px;
+        height: 18px;
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 9px;
+        transition: background 0.15s ease;
+      }
+      .us-toggle-thumb {
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 14px;
+        height: 14px;
+        background: #fff;
+        border-radius: 50%;
+        transition: transform 0.15s ease;
+      }
+      .us-toggle-input:checked + .us-toggle-track {
+        background: #4caf50;
+      }
+      .us-toggle-input:checked + .us-toggle-track .us-toggle-thumb {
+        transform: translateX(16px);
+      }
+      .us-file-input-wrapper {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .us-native-file-input {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        opacity: 0;
+        overflow: hidden;
+      }
+      /* !important throughout: "hidden" has to beat higher-specificity Django rules such as
+         "fieldset.collapse" on the native <details> Metadata panel. */
+      .us-artist-hidden {
+        display: none !important;
+      }
+      body.us-dev-mode .us-artist-hidden {
+        display: revert !important;
+      }
+      /* "display: revert" rolls back to the browser default (block for a div), skipping
+         Django's own author-level ".flex-container { display: flex; }" - the other hidden
+         fields are plain block .form-row divs so that's harmless, but this one IS a flex
+         container itself, so it needs an explicit override instead. */
+      body.us-dev-mode .fieldBox.field-render_thumbnails.us-artist-hidden {
+        display: flex !important;
+      }
+    </style></head>
+
+<body class=" app-characters model-character change-form" data-admin-utc-offset="7200">
+<a href="#content-start" class="skip-to-content-link">Skip to main content</a>
+<!-- Container -->
+<div id="container">
+
+    
+    <!-- Header -->
+    
+      <header id="header">
+        <div id="branding">
+        
+<div id="site-name"><a href="/admin/">Blender Studio Admin</a></div>
+
+
+        </div>
+        
+        
+        <div id="user-tools">
+            
+                Welcome,
+                <strong>Mets_c31627</strong>.
+            
+            
+                
+                    <a href="/">View site</a> /
+                
+                
+                    
+                    
+                        <a href="/admin/doc/">Documentation</a> /
+                    
+                
+                
+                <a href="/admin/password_change/">Change password</a> /
+                
+                <form id="logout-form" method="post" action="/admin/logout/">
+                    <input type="hidden" name="csrfmiddlewaretoken" value="Wh4lJsTnpDxgIqrbEI15dNNtZ1OLGUql9PTRpWsG6dg8d6JRuFUcErc8wKcruRjV">
+                    <button type="submit">Log out</button>
+                </form>
+                
+<button class="theme-toggle">
+  <span class="visually-hidden theme-label-when-auto">Toggle theme (current theme: auto)</span>
+  <span class="visually-hidden theme-label-when-light">Toggle theme (current theme: light)</span>
+  <span class="visually-hidden theme-label-when-dark">Toggle theme (current theme: dark)</span>
+  <svg aria-hidden="true" class="theme-icon-when-auto">
+    <use xlink:href="#icon-auto"></use>
+  </svg>
+  <svg aria-hidden="true" class="theme-icon-when-dark">
+    <use xlink:href="#icon-moon"></use>
+  </svg>
+  <svg aria-hidden="true" class="theme-icon-when-light">
+    <use xlink:href="#icon-sun"></use>
+  </svg>
+</button>
+
+            
+        </div>
+        
+        
+        
+      </header>
+    
+    <!-- END Header -->
+    
+      <nav aria-label="Breadcrumbs">
+        
+<div class="breadcrumbs">
+<a href="/admin/">Home</a>
+› <a href="/admin/characters/">Characters</a>
+› <a href="/admin/characters/character/">Characters</a>
+› Critter Evolved
+</div>
+
+      <label class="button us-artist-mode-toggle" title="Artist Mode hides fields only relevant for debugging/dev work"><span>Artist Mode</span><input type="checkbox" class="us-toggle-input"><span class="us-toggle-track"><span class="us-toggle-thumb"></span></span></label><a href="/admin/r/100/52/" target="_blank" class="viewsitelink button">View on site</a><button type="button" class="button us-header-save-button">Save</button></nav>
+    
+    
+
+    <div class="main" id="main">
+      
+      <main id="content-start" class="content" tabindex="-1">
+        
+          
+        
+        <!-- Content -->
+        <div id="content" class="colM">
+          
+          <h1 style="display: none;">Change character</h1>
+          <h2 style="display: none;">Critter Evolved</h2>
+          <div id="content-main">
+
+
+  
+
+
+<form method="post" id="character_form" novalidate=""><input type="hidden" name="csrfmiddlewaretoken" value="Wh4lJsTnpDxgIqrbEI15dNNtZ1OLGUql9PTRpWsG6dg8d6JRuFUcErc8wKcruRjV">
+<div>
+
+
+
+
+
+
+
+
+
+  <fieldset class="module aligned ">
+    
+    
+    
+        <div class="form-row field-date_published">
+            
+            
+                <div>
+                    
+                        <div class="flex-container">
+                            
+                                <label class="required">Date published:</label>
+                                
+                                    <p class="datetime"><input type="text" name="date_published_0" value="2026-05-11" class="vDateField" size="10" required="" id="id_date_published_0"><span class="datetimeshortcuts">&nbsp;<a href="#">Today</a>&nbsp;|&nbsp;<a href="#" id="calendarlink0"><span class="date-icon" title="Choose a Date"></span></a></span><span class="us-artist-hidden">
+
+<br>
+  Time: <input type="text" name="date_published_1" value="17:51:22" class="vTimeField" size="8" required="" id="id_date_published_1"><span class="datetimeshortcuts">&nbsp;<a href="#">Now</a>&nbsp;|&nbsp;<a href="#" id="clocklink0"><span class="clock-icon" title="Choose a Time"></span></a></span></span>
+
+
+</p><input type="hidden" name="initial-date_published_0" value="2026-05-11" id="initial-id_date_published_0"><input type="hidden" name="initial-date_published_1" value="17:51:22" id="initial-id_date_published_1">
+                                
+                            
+                        </div>
+                    
+                </div>
+            
+            
+        </div>
+    
+        <div class="form-row field-project">
+            
+            
+                <div>
+                    
+                        <div class="flex-container">
+                            
+                                <label for="id_project">Project:</label>
+                                
+                                    <div class="related-widget-wrapper" data-model-ref="project">
+    <select name="project" id="id_project" class="admin-autocomplete select2-hidden-accessible" data-ajax--cache="true" data-ajax--delay="250" data-ajax--type="GET" data-ajax--url="/admin/autocomplete/" data-app-label="characters" data-model-name="character" data-field-name="project" data-theme="admin-autocomplete" data-allow-clear="true" data-placeholder="" lang="en" data-select2-id="id_project" tabindex="-1" aria-hidden="true">
+  <option value="" data-select2-id="2"></option>
+
+  <option value="23" selected="" data-select2-id="3">Singularity</option>
+
+</select><span class="select2 select2-container select2-container--admin-autocomplete" dir="ltr" data-select2-id="1" style="width: 260px;"><span class="selection"><span class="select2-selection select2-selection--single" role="combobox" aria-haspopup="true" aria-expanded="false" tabindex="0" aria-disabled="false" aria-labelledby="select2-id_project-container"><span class="select2-selection__rendered" id="select2-id_project-container" role="textbox" aria-readonly="true" title="Singularity"><span class="select2-selection__clear" title="Remove all items" data-select2-id="9">×</span>Singularity</span><span class="select2-selection__arrow" role="presentation"><b role="presentation"></b></span></span></span><span class="dropdown-wrapper" aria-hidden="true"></span></span>
+    
+        <a class="related-widget-wrapper-link change-related" id="change_id_project" data-href-template="/admin/projects/project/__fk__/change/?_to_field=id&amp;_popup=1" data-popup="yes" title="Change selected project" href="/admin/projects/project/23/change/?_to_field=id&amp;_popup=1"><img src="/static/admin/img/icon-changelink.7eddb320e61f.svg" alt="" width="24" height="24"></a><a class="related-widget-wrapper-link view-related" id="view_id_project" data-href-template="/admin/projects/project/__fk__/change/?_to_field=id" title="View selected project" href="/admin/projects/project/23/change/?_to_field=id" target="_blank" rel="noopener"><img src="/static/admin/img/icon-viewlink.41eb31f7826e.svg" alt="" width="24" height="24"></a>
+    
+</div>
+                                
+                            
+                        </div>
+                    
+                </div>
+            
+            
+        </div>
+    
+        <div class="form-row field-order">
+            
+            
+                <div>
+                    
+                        <div class="flex-container">
+                            
+                                <label for="id_order">Order:</label>
+                                
+                                    <input type="number" name="order" value="7879" class="vIntegerField" id="id_order">
+                                
+                            
+                        </div>
+                    
+                </div>
+            
+            
+        </div>
+    
+        <div class="form-row field-name">
+            
+            
+                <div>
+                    
+                        <div class="flex-container">
+                            
+                                <label class="required" for="id_name">Name:</label>
+                                
+                                    <input type="text" name="name" value="Critter Evolved" class="vTextField" maxlength="512" required="" id="id_name">
+                                
+                            
+                        </div>
+                    
+                </div>
+            
+            
+        </div>
+    
+        <div class="form-row field-slug">
+            
+            
+                <div>
+                    
+                        <div class="flex-container">
+                            
+                                <label class="required" for="id_slug">Slug:</label>
+                                
+                                    <input type="text" name="slug" value="critter-evolved" class="vTextField" maxlength="50" required="" id="id_slug">
+                                
+                            
+                        </div>
+                    
+                </div>
+            
+            
+        </div>
+    
+        <div class="form-row field-is_published">
+            
+            
+                <div>
+                    
+                        <div class="flex-container checkbox-row">
+                            
+                                <input type="checkbox" name="is_published" id="id_is_published" checked=""><label class="vCheckboxLabel" for="id_is_published">Published</label>
+                            
+                        </div>
+                    
+                </div>
+            
+            
+        </div>
+    
+    
+</fieldset>
+
+
+
+
+
+
+
+
+    
+<div class="js-inline-admin-formset inline-group" id="versions-group" data-inline-type="stacked" data-inline-formset="{&quot;name&quot;: &quot;#versions&quot;, &quot;options&quot;: {&quot;prefix&quot;: &quot;versions&quot;, &quot;addText&quot;: &quot;Add another Character version&quot;, &quot;deleteText&quot;: &quot;Remove&quot;}}">
+  <fieldset class="module us-collapsible us-collapsed" data-us-collapsible="true">
+    <h2 class="us-collapsible-heading" role="button" tabindex="0" aria-expanded="false"><span class="us-collapse-arrow">▼</span>Character versions</h2>
+    <input type="hidden" name="versions-TOTAL_FORMS" value="1" id="id_versions-TOTAL_FORMS" autocomplete="off"><input type="hidden" name="versions-INITIAL_FORMS" value="1" id="id_versions-INITIAL_FORMS"><input type="hidden" name="versions-MIN_NUM_FORMS" value="0" id="id_versions-MIN_NUM_FORMS" autocomplete="off"><input type="hidden" name="versions-MAX_NUM_FORMS" value="1000" id="id_versions-MAX_NUM_FORMS" autocomplete="off">
+    
+
+    <div class="inline-related has_original dynamic-versions us-entry-panel us-collapsible" id="versions-0" data-us-collapsible="true">
+      <h3 class="us-collapsible-heading" role="button" tabindex="0" aria-expanded="true"><span class="us-collapse-arrow">▼</span><span class="inline_label">Critter Evolved v1
+      </span>
+        
+         <a href="/admin/r/101/82/" style="margin-left: 1em;" target="_blank">View on site</a>
+        <span class="delete"><input type="checkbox" name="versions-0-DELETE" id="id_versions-0-DELETE"> <label class="vCheckboxLabel inline" for="id_versions-0-DELETE">Delete</label></span>
+      </h3>
+      
+      
+        <fieldset class="module aligned ">
+    
+    
+    
+        <div class="form-row field-is_published field-number field-min_blender_version">
+            <div class="flex-container form-multiline">
+            
+                <div>
+                    
+                        <div class="flex-container fieldBox field-is_published checkbox-row">
+                            
+                                <input type="checkbox" name="versions-0-is_published" id="id_versions-0-is_published" checked=""><label class="vCheckboxLabel" for="id_versions-0-is_published">Is published</label>
+                            
+                        </div>
+                    
+                </div>
+            
+                <div>
+                    
+                        <div class="flex-container fieldBox field-number">
+                            
+                                <label class="required inline" for="id_versions-0-number">Number:</label>
+                                
+                                    <input type="number" name="versions-0-number" value="1" class="vIntegerField" id="id_versions-0-number">
+                                
+                            
+                        </div>
+                    
+                </div>
+            
+                <div>
+                    
+                        <div class="flex-container fieldBox field-min_blender_version">
+                            
+                                <label class="required inline" for="id_versions-0-min_blender_version">Min blender version:</label>
+                                
+                                    <select name="versions-0-min_blender_version" id="id_versions-0-min_blender_version">
+  <option value="">---------</option>
+
+  <option value="2.70">V270</option>
+
+  <option value="2.80">V280</option>
+
+  <option value="2.90">V290</option>
+
+  <option value="3.0">V300</option>
+
+  <option value="3.1">V310</option>
+
+  <option value="3.4">V340</option>
+
+  <option value="3.5">V350</option>
+
+  <option value="3.6">V360</option>
+
+  <option value="4.0">V400</option>
+
+  <option value="4.1">V410</option>
+
+  <option value="4.2">V420</option>
+
+  <option value="4.3">V430</option>
+
+  <option value="4.5">V450</option>
+
+  <option value="5.0" selected="">V500</option>
+
+  <option value="5.1">V510</option>
+
+</select>
+                                
+                            
+                        </div>
+                    
+                </div>
+            
+            </div>
+        </div>
+    
+        <div class="form-row field-date_published">
+            
+            
+                <div>
+                    
+                        <div class="flex-container">
+                            
+                                <label class="required">Date published:</label>
+                                
+                                    <p class="datetime">
+  Date: <input type="text" name="versions-0-date_published_0" value="2026-05-08" class="vDateField" size="10" id="id_versions-0-date_published_0"><span class="datetimeshortcuts">&nbsp;<a href="#">Today</a>&nbsp;|&nbsp;<a href="#" id="calendarlink1"><span class="date-icon" title="Choose a Date"></span></a></span>
+
+<br>
+  Time: <input type="text" name="versions-0-date_published_1" value="17:51:22" class="vTimeField" size="8" id="id_versions-0-date_published_1"><span class="datetimeshortcuts">&nbsp;<a href="#">Now</a>&nbsp;|&nbsp;<a href="#" id="clocklink1"><span class="clock-icon" title="Choose a Time"></span></a></span>
+
+
+</p><input type="hidden" name="initial-versions-0-date_published_0" value="2026-05-08" id="initial-versions-0-id_versions-0-date_published_0"><input type="hidden" name="initial-versions-0-date_published_1" value="17:51:22" id="initial-versions-0-id_versions-0-date_published_1">
+                                
+                            
+                        </div>
+                    
+                </div>
+            
+            
+        </div>
+    
+    
+</fieldset>
+
+      
+        <fieldset class="module aligned ">
+    
+    
+    
+        <div class="form-row field-static_asset field-preview_video_static_asset field-preview_youtube_link">
+            <div class="flex-container form-multiline">
+            
+                <div>
+                    
+                        <div class="flex-container fieldBox field-static_asset">
+                            
+                                <label class="required" for="id_versions-0-static_asset">Static asset:</label>
+                                
+                                    <div class="related-widget-wrapper" data-model-ref="staticasset">
+    <select name="versions-0-static_asset" id="id_versions-0-static_asset" class="admin-autocomplete select2-hidden-accessible" data-ajax--cache="true" data-ajax--delay="250" data-ajax--type="GET" data-ajax--url="/admin/autocomplete/" data-app-label="characters" data-model-name="characterversion" data-field-name="static_asset" data-theme="admin-autocomplete" data-allow-clear="false" data-placeholder="" lang="en" data-select2-id="id_versions-0-static_asset" tabindex="-1" aria-hidden="true">
+  <option value="12905" selected="" data-select2-id="6">(12905) critter_evolved-v1.blend</option>
+
+</select><span class="select2 select2-container select2-container--admin-autocomplete" dir="ltr" data-select2-id="5" style="width: 260px;"><span class="selection"><span class="select2-selection select2-selection--single" role="combobox" aria-haspopup="true" aria-expanded="false" tabindex="0" aria-disabled="false" aria-labelledby="select2-id_versions-0-static_asset-container"><span class="select2-selection__rendered" id="select2-id_versions-0-static_asset-container" role="textbox" aria-readonly="true" title="(12905) critter_evolved-v1.blend">(12905) critter_evolved-v1.blend</span><span class="select2-selection__arrow" role="presentation"><b role="presentation"></b></span></span></span><span class="dropdown-wrapper" aria-hidden="true"></span></span>
+    
+        <a class="related-widget-wrapper-link change-related" id="change_id_versions-0-static_asset" data-href-template="/admin/static_assets/staticasset/__fk__/change/?_to_field=id&amp;_popup=1" data-popup="yes" title="Change selected static asset" href="/admin/static_assets/staticasset/12905/change/?_to_field=id&amp;_popup=1"><img src="/static/admin/img/icon-changelink.7eddb320e61f.svg" alt="" width="24" height="24"></a><a class="related-widget-wrapper-link add-related" id="add_id_versions-0-static_asset" data-popup="yes" href="/admin/static_assets/staticasset/add/?_to_field=id&amp;_popup=1" title="Add another static asset"><img src="/static/admin/img/icon-addlink.073aeb1feda7.svg" alt="" width="24" height="24"></a><a class="related-widget-wrapper-link view-related" id="view_id_versions-0-static_asset" data-href-template="/admin/static_assets/staticasset/__fk__/change/?_to_field=id" title="View selected static asset" href="/admin/static_assets/staticasset/12905/change/?_to_field=id" target="_blank" rel="noopener"><img src="/static/admin/img/icon-viewlink.41eb31f7826e.svg" alt="" width="24" height="24"></a>
+    
+</div>
+                                
+                            
+                        </div>
+                    
+                </div>
+            
+                <div>
+                    
+                        <div class="flex-container fieldBox field-preview_video_static_asset">
+                            
+                                <label class="inline" for="id_versions-0-preview_video_static_asset">Preview video static asset:</label>
+                                
+                                    <div class="related-widget-wrapper" data-model-ref="staticasset">
+    <select name="versions-0-preview_video_static_asset" id="id_versions-0-preview_video_static_asset" class="admin-autocomplete select2-hidden-accessible" data-ajax--cache="true" data-ajax--delay="250" data-ajax--type="GET" data-ajax--url="/admin/autocomplete/" data-app-label="characters" data-model-name="characterversion" data-field-name="preview_video_static_asset" data-theme="admin-autocomplete" data-allow-clear="true" data-placeholder="" lang="en" data-select2-id="id_versions-0-preview_video_static_asset" tabindex="-1" aria-hidden="true">
+  <option value="" data-select2-id="8"></option>
+
+</select><span class="select2 select2-container select2-container--admin-autocomplete" dir="ltr" data-select2-id="7" style="width: 260px;"><span class="selection"><span class="select2-selection select2-selection--single" role="combobox" aria-haspopup="true" aria-expanded="false" tabindex="0" aria-disabled="false" aria-labelledby="select2-id_versions-0-preview_video_static_asset-container"><span class="select2-selection__rendered" id="select2-id_versions-0-preview_video_static_asset-container" role="textbox" aria-readonly="true"><span class="select2-selection__placeholder"></span></span><span class="select2-selection__arrow" role="presentation"><b role="presentation"></b></span></span></span><span class="dropdown-wrapper" aria-hidden="true"></span></span>
+    
+        <a class="related-widget-wrapper-link change-related" id="change_id_versions-0-preview_video_static_asset" data-href-template="/admin/static_assets/staticasset/__fk__/change/?_to_field=id&amp;_popup=1" data-popup="yes" title="Change selected static asset" aria-disabled="true"><img src="/static/admin/img/icon-changelink.7eddb320e61f.svg" alt="" width="24" height="24"></a><a class="related-widget-wrapper-link add-related" id="add_id_versions-0-preview_video_static_asset" data-popup="yes" href="/admin/static_assets/staticasset/add/?_to_field=id&amp;_popup=1" title="Add another static asset"><img src="/static/admin/img/icon-addlink.073aeb1feda7.svg" alt="" width="24" height="24"></a><a class="related-widget-wrapper-link delete-related us-artist-hidden" id="delete_id_versions-0-preview_video_static_asset" data-href-template="/admin/static_assets/staticasset/__fk__/delete/?_to_field=id&amp;_popup=1" data-popup="yes" title="Delete selected static asset" aria-disabled="true"><img src="/static/admin/img/icon-deletelink.564ef9dc3854.svg" alt="" width="24" height="24"></a><a class="related-widget-wrapper-link view-related" id="view_id_versions-0-preview_video_static_asset" data-href-template="/admin/static_assets/staticasset/__fk__/change/?_to_field=id" title="View selected static asset" aria-disabled="true" target="_blank" rel="noopener"><img src="/static/admin/img/icon-viewlink.41eb31f7826e.svg" alt="" width="24" height="24"></a>
+    
+</div>
+                                
+                            
+                        </div>
+                    
+                </div>
+            
+                <div>
+                    
+                        <div class="flex-container fieldBox field-preview_youtube_link">
+                            
+                                <label class="inline" for="id_versions-0-preview_youtube_link">Preview youtube link:</label>
+                                
+                                    <input type="url" name="versions-0-preview_youtube_link" class="vURLField" maxlength="200" id="id_versions-0-preview_youtube_link">
+                                
+                            
+                        </div>
+                    
+                </div>
+            
+            </div>
+        </div>
+    
+    
+</fieldset>
+
+      
+        <fieldset class="module aligned ">
+    
+    
+    
+        <div class="form-row field-description">
+            
+            
+                <div>
+                    
+                        <div class="flex-container">
+                            
+                                <label for="id_versions-0-description">Description:</label>
+                                
+                                    <textarea name="versions-0-description" cols="40" rows="10" class="vLargeTextField" aria-describedby="id_versions-0-description_helptext" id="id_versions-0-description">&lt;p class="alert alert-warning text-warning"&gt;
+This character requires at least &lt;strong&gt;Blender 5.0&lt;/strong&gt;, and WILL NOT WORK on lower versions!
+&lt;/p&gt;
+
+The "evolved" version of Critter, used only for the final shot of the open movie [Singularity](https://studio.blender.org/projects/singularity/).</textarea>
+                                
+                            
+                        </div>
+                    
+                        <div class="help" id="id_versions-0-description_helptext">
+                            <div>
+<p>
+    Format content in <a href="https://commonmark.org/help/" target="_blank">Markdown</a>. Use custom tags as documented in the <a href="https://sites.google.com/blender.org/hq-portal/communication/markdown-cheatsheet" target="_blank">Markdown Cheatsheet</a>.
+</p>
+</div>
+                        </div>
+                    
+                </div>
+            
+            
+        </div>
+    
+    
+</fieldset>
+
+      
+      <input type="hidden" name="versions-0-id" value="82" id="id_versions-0-id">
+      <input type="hidden" name="versions-0-character" value="52" id="id_versions-0-character">
+    </div><div class="inline-related empty-form last-related us-entry-panel us-collapsible" id="versions-empty" data-us-collapsible="true">
+      <h3 class="us-collapsible-heading" role="button" tabindex="0" aria-expanded="true"><span class="us-collapse-arrow">▼</span><span class="inline_label">#2</span>
+        
+        
+        
+      </h3>
+      
+      
+        <fieldset class="module aligned ">
+    
+    
+    
+        <div class="form-row field-is_published field-number field-min_blender_version">
+            <div class="flex-container form-multiline">
+            
+                <div>
+                    
+                        <div class="flex-container fieldBox field-is_published checkbox-row">
+                            
+                                <input type="checkbox" name="versions-__prefix__-is_published" id="id_versions-__prefix__-is_published"><label class="vCheckboxLabel" for="id_versions-__prefix__-is_published">Is published</label>
+                            
+                        </div>
+                    
+                </div>
+            
+                <div>
+                    
+                        <div class="flex-container fieldBox field-number">
+                            
+                                <label class="required inline" for="id_versions-__prefix__-number">Number:</label>
+                                
+                                    <input type="number" name="versions-__prefix__-number" class="vIntegerField" id="id_versions-__prefix__-number">
+                                
+                            
+                        </div>
+                    
+                </div>
+            
+                <div>
+                    
+                        <div class="flex-container fieldBox field-min_blender_version">
+                            
+                                <label class="required inline" for="id_versions-__prefix__-min_blender_version">Min blender version:</label>
+                                
+                                    <select name="versions-__prefix__-min_blender_version" id="id_versions-__prefix__-min_blender_version">
+  <option value="" selected="">---------</option>
+
+  <option value="2.70">V270</option>
+
+  <option value="2.80">V280</option>
+
+  <option value="2.90">V290</option>
+
+  <option value="3.0">V300</option>
+
+  <option value="3.1">V310</option>
+
+  <option value="3.4">V340</option>
+
+  <option value="3.5">V350</option>
+
+  <option value="3.6">V360</option>
+
+  <option value="4.0">V400</option>
+
+  <option value="4.1">V410</option>
+
+  <option value="4.2">V420</option>
+
+  <option value="4.3">V430</option>
+
+  <option value="4.5">V450</option>
+
+  <option value="5.0">V500</option>
+
+  <option value="5.1">V510</option>
+
+</select>
+                                
+                            
+                        </div>
+                    
+                </div>
+            
+            </div>
+        </div>
+    
+        <div class="form-row field-date_published">
+            
+            
+                <div>
+                    
+                        <div class="flex-container">
+                            
+                                <label class="required">Date published:</label>
+                                
+                                    <p class="datetime">
+  Date: <input type="text" name="versions-__prefix__-date_published_0" value="2026-09-10" class="vDateField" size="10" id="id_versions-__prefix__-date_published_0"><span class="datetimeshortcuts">&nbsp;<a href="#">Today</a>&nbsp;|&nbsp;<a href="#" id="calendarlink2"><span class="date-icon" title="Choose a Date"></span></a></span>
+
+<br>
+  Time: <input type="text" name="versions-__prefix__-date_published_1" value="18:01:22" class="vTimeField" size="8" id="id_versions-__prefix__-date_published_1"><span class="datetimeshortcuts">&nbsp;<a href="#">Now</a>&nbsp;|&nbsp;<a href="#" id="clocklink2"><span class="clock-icon" title="Choose a Time"></span></a></span>
+
+
+</p><input type="hidden" name="initial-versions-__prefix__-date_published_0" value="2026-09-10" id="initial-versions-__prefix__-id_versions-__prefix__-date_published_0"><input type="hidden" name="initial-versions-__prefix__-date_published_1" value="18:01:22" id="initial-versions-__prefix__-id_versions-__prefix__-date_published_1">
+                                
+                            
+                        </div>
+                    
+                </div>
+            
+            
+        </div>
+    
+    
+</fieldset>
+
+      
+        <fieldset class="module aligned ">
+    
+    
+    
+        <div class="form-row field-static_asset field-preview_video_static_asset field-preview_youtube_link">
+            <div class="flex-container form-multiline">
+            
+                <div>
+                    
+                        <div class="flex-container fieldBox field-static_asset">
+                            
+                                <label class="required" for="id_versions-__prefix__-static_asset">Static asset:</label>
+                                
+                                    <div class="related-widget-wrapper" data-model-ref="staticasset">
+    <select name="versions-__prefix__-static_asset" id="id_versions-__prefix__-static_asset" class="admin-autocomplete" data-ajax--cache="true" data-ajax--delay="250" data-ajax--type="GET" data-ajax--url="/admin/autocomplete/" data-app-label="characters" data-model-name="characterversion" data-field-name="static_asset" data-theme="admin-autocomplete" data-allow-clear="false" data-placeholder="" lang="en">
+</select>
+    
+        <a class="related-widget-wrapper-link change-related" id="change_id_versions-__prefix__-static_asset" data-href-template="/admin/static_assets/staticasset/__fk__/change/?_to_field=id&amp;_popup=1" data-popup="yes" title="Change selected static asset" aria-disabled="true"><img src="/static/admin/img/icon-changelink.7eddb320e61f.svg" alt="" width="24" height="24"></a><a class="related-widget-wrapper-link add-related" id="add_id_versions-__prefix__-static_asset" data-popup="yes" href="/admin/static_assets/staticasset/add/?_to_field=id&amp;_popup=1" title="Add another static asset"><img src="/static/admin/img/icon-addlink.073aeb1feda7.svg" alt="" width="24" height="24"></a><a class="related-widget-wrapper-link view-related" id="view_id_versions-__prefix__-static_asset" data-href-template="/admin/static_assets/staticasset/__fk__/change/?_to_field=id" title="View selected static asset" aria-disabled="true" target="_blank" rel="noopener"><img src="/static/admin/img/icon-viewlink.41eb31f7826e.svg" alt="" width="24" height="24"></a>
+    
+</div>
+                                
+                            
+                        </div>
+                    
+                </div>
+            
+                <div>
+                    
+                        <div class="flex-container fieldBox field-preview_video_static_asset">
+                            
+                                <label class="inline" for="id_versions-__prefix__-preview_video_static_asset">Preview video static asset:</label>
+                                
+                                    <div class="related-widget-wrapper" data-model-ref="staticasset">
+    <select name="versions-__prefix__-preview_video_static_asset" id="id_versions-__prefix__-preview_video_static_asset" class="admin-autocomplete" data-ajax--cache="true" data-ajax--delay="250" data-ajax--type="GET" data-ajax--url="/admin/autocomplete/" data-app-label="characters" data-model-name="characterversion" data-field-name="preview_video_static_asset" data-theme="admin-autocomplete" data-allow-clear="true" data-placeholder="" lang="en">
+  <option value=""></option>
+
+</select>
+    
+        <a class="related-widget-wrapper-link change-related" id="change_id_versions-__prefix__-preview_video_static_asset" data-href-template="/admin/static_assets/staticasset/__fk__/change/?_to_field=id&amp;_popup=1" data-popup="yes" title="Change selected static asset" aria-disabled="true"><img src="/static/admin/img/icon-changelink.7eddb320e61f.svg" alt="" width="24" height="24"></a><a class="related-widget-wrapper-link add-related" id="add_id_versions-__prefix__-preview_video_static_asset" data-popup="yes" href="/admin/static_assets/staticasset/add/?_to_field=id&amp;_popup=1" title="Add another static asset"><img src="/static/admin/img/icon-addlink.073aeb1feda7.svg" alt="" width="24" height="24"></a><a class="related-widget-wrapper-link delete-related us-artist-hidden" id="delete_id_versions-__prefix__-preview_video_static_asset" data-href-template="/admin/static_assets/staticasset/__fk__/delete/?_to_field=id&amp;_popup=1" data-popup="yes" title="Delete selected static asset" aria-disabled="true"><img src="/static/admin/img/icon-deletelink.564ef9dc3854.svg" alt="" width="24" height="24"></a><a class="related-widget-wrapper-link view-related" id="view_id_versions-__prefix__-preview_video_static_asset" data-href-template="/admin/static_assets/staticasset/__fk__/change/?_to_field=id" title="View selected static asset" aria-disabled="true" target="_blank" rel="noopener"><img src="/static/admin/img/icon-viewlink.41eb31f7826e.svg" alt="" width="24" height="24"></a>
+    
+</div>
+                                
+                            
+                        </div>
+                    
+                </div>
+            
+                <div>
+                    
+                        <div class="flex-container fieldBox field-preview_youtube_link">
+                            
+                                <label class="inline" for="id_versions-__prefix__-preview_youtube_link">Preview youtube link:</label>
+                                
+                                    <input type="url" name="versions-__prefix__-preview_youtube_link" class="vURLField" maxlength="200" id="id_versions-__prefix__-preview_youtube_link">
+                                
+                            
+                        </div>
+                    
+                </div>
+            
+            </div>
+        </div>
+    
+    
+</fieldset>
+
+      
+        <fieldset class="module aligned ">
+    
+    
+    
+        <div class="form-row field-description">
+            
+            
+                <div>
+                    
+                        <div class="flex-container">
+                            
+                                <label for="id_versions-__prefix__-description">Description:</label>
+                                
+                                    <textarea name="versions-__prefix__-description" cols="40" rows="10" class="vLargeTextField" aria-describedby="id_versions-__prefix__-description_helptext" id="id_versions-__prefix__-description"></textarea>
+                                
+                            
+                        </div>
+                    
+                        <div class="help" id="id_versions-__prefix__-description_helptext">
+                            <div>
+<p>
+    Format content in <a href="https://commonmark.org/help/" target="_blank">Markdown</a>. Use custom tags as documented in the <a href="https://sites.google.com/blender.org/hq-portal/communication/markdown-cheatsheet" target="_blank">Markdown Cheatsheet</a>.
+</p>
+</div>
+                        </div>
+                    
+                </div>
+            
+            
+        </div>
+    
+    
+</fieldset>
+
+      
+      <input type="hidden" name="versions-__prefix__-id" id="id_versions-__prefix__-id">
+      <input type="hidden" name="versions-__prefix__-character" value="52" id="id_versions-__prefix__-character">
+    </div><div class="add-row"><a role="button" class="addlink" href="#">Add another Character version</a></div>
+  </fieldset>
+</div>
+
+
+    
+<div class="js-inline-admin-formset inline-group" id="showcases-group" data-inline-type="stacked" data-inline-formset="{&quot;name&quot;: &quot;#showcases&quot;, &quot;options&quot;: {&quot;prefix&quot;: &quot;showcases&quot;, &quot;addText&quot;: &quot;Add another Character showcase&quot;, &quot;deleteText&quot;: &quot;Remove&quot;}}">
+  <fieldset class="module us-collapsible" data-us-collapsible="true">
+    <h2 class="us-collapsible-heading" role="button" tabindex="0" aria-expanded="true"><span class="us-collapse-arrow">▼</span>Character showcases</h2>
+    <input type="hidden" name="showcases-TOTAL_FORMS" value="0" id="id_showcases-TOTAL_FORMS" autocomplete="off"><input type="hidden" name="showcases-INITIAL_FORMS" value="0" id="id_showcases-INITIAL_FORMS"><input type="hidden" name="showcases-MIN_NUM_FORMS" value="0" id="id_showcases-MIN_NUM_FORMS" autocomplete="off"><input type="hidden" name="showcases-MAX_NUM_FORMS" value="1000" id="id_showcases-MAX_NUM_FORMS" autocomplete="off">
+    
+
+    <div class="inline-related empty-form last-related us-entry-panel us-collapsible" id="showcases-empty" data-us-collapsible="true">
+      <h3 class="us-collapsible-heading" role="button" tabindex="0" aria-expanded="true"><span class="us-collapse-arrow">▼</span><span class="inline_label">#1</span>
+        
+        
+        
+      </h3>
+      
+      
+        <fieldset class="module aligned ">
+    
+    
+    
+        <div class="form-row field-is_published field-min_blender_version">
+            <div class="flex-container form-multiline">
+            
+                <div>
+                    
+                        <div class="flex-container fieldBox field-is_published checkbox-row">
+                            
+                                <input type="checkbox" name="showcases-__prefix__-is_published" id="id_showcases-__prefix__-is_published"><label class="vCheckboxLabel" for="id_showcases-__prefix__-is_published">Is published</label>
+                            
+                        </div>
+                    
+                </div>
+            
+                <div>
+                    
+                        <div class="flex-container fieldBox field-min_blender_version">
+                            
+                                <label class="required inline" for="id_showcases-__prefix__-min_blender_version">Min blender version:</label>
+                                
+                                    <select name="showcases-__prefix__-min_blender_version" id="id_showcases-__prefix__-min_blender_version">
+  <option value="" selected="">---------</option>
+
+  <option value="2.70">V270</option>
+
+  <option value="2.80">V280</option>
+
+  <option value="2.90">V290</option>
+
+  <option value="3.0">V300</option>
+
+  <option value="3.1">V310</option>
+
+  <option value="3.4">V340</option>
+
+  <option value="3.5">V350</option>
+
+  <option value="3.6">V360</option>
+
+  <option value="4.0">V400</option>
+
+  <option value="4.1">V410</option>
+
+  <option value="4.2">V420</option>
+
+  <option value="4.3">V430</option>
+
+  <option value="4.5">V450</option>
+
+  <option value="5.0">V500</option>
+
+  <option value="5.1">V510</option>
+
+</select>
+                                
+                            
+                        </div>
+                    
+                </div>
+            
+            </div>
+        </div>
+    
+        <div class="form-row field-date_published">
+            
+            
+                <div>
+                    
+                        <div class="flex-container">
+                            
+                                <label class="required">Date published:</label>
+                                
+                                    <p class="datetime">
+  Date: <input type="text" name="showcases-__prefix__-date_published_0" value="2026-09-10" class="vDateField" size="10" id="id_showcases-__prefix__-date_published_0"><span class="datetimeshortcuts">&nbsp;<a href="#">Today</a>&nbsp;|&nbsp;<a href="#" id="calendarlink3"><span class="date-icon" title="Choose a Date"></span></a></span>
+
+<br>
+  Time: <input type="text" name="showcases-__prefix__-date_published_1" value="18:01:22" class="vTimeField" size="8" id="id_showcases-__prefix__-date_published_1"><span class="datetimeshortcuts">&nbsp;<a href="#">Now</a>&nbsp;|&nbsp;<a href="#" id="clocklink3"><span class="clock-icon" title="Choose a Time"></span></a></span>
+
+
+</p><input type="hidden" name="initial-showcases-__prefix__-date_published_0" value="2026-09-10" id="initial-showcases-__prefix__-id_showcases-__prefix__-date_published_0"><input type="hidden" name="initial-showcases-__prefix__-date_published_1" value="18:01:22" id="initial-showcases-__prefix__-id_showcases-__prefix__-date_published_1">
+                                
+                            
+                        </div>
+                    
+                </div>
+            
+            
+        </div>
+    
+    
+</fieldset>
+
+      
+        <fieldset class="module aligned ">
+    
+    
+    
+        <div class="form-row field-static_asset field-preview_video_static_asset field-preview_youtube_link">
+            <div class="flex-container form-multiline">
+            
+                <div>
+                    
+                        <div class="flex-container fieldBox field-static_asset">
+                            
+                                <label for="id_showcases-__prefix__-static_asset">Static asset:</label>
+                                
+                                    <div class="related-widget-wrapper" data-model-ref="staticasset">
+    <select name="showcases-__prefix__-static_asset" id="id_showcases-__prefix__-static_asset" class="admin-autocomplete" data-ajax--cache="true" data-ajax--delay="250" data-ajax--type="GET" data-ajax--url="/admin/autocomplete/" data-app-label="characters" data-model-name="charactershowcase" data-field-name="static_asset" data-theme="admin-autocomplete" data-allow-clear="true" data-placeholder="" lang="en">
+  <option value=""></option>
+
+</select>
+    
+        <a class="related-widget-wrapper-link change-related" id="change_id_showcases-__prefix__-static_asset" data-href-template="/admin/static_assets/staticasset/__fk__/change/?_to_field=id&amp;_popup=1" data-popup="yes" title="Change selected static asset" aria-disabled="true"><img src="/static/admin/img/icon-changelink.7eddb320e61f.svg" alt="" width="24" height="24"></a><a class="related-widget-wrapper-link add-related" id="add_id_showcases-__prefix__-static_asset" data-popup="yes" href="/admin/static_assets/staticasset/add/?_to_field=id&amp;_popup=1" title="Add another static asset"><img src="/static/admin/img/icon-addlink.073aeb1feda7.svg" alt="" width="24" height="24"></a><a class="related-widget-wrapper-link view-related" id="view_id_showcases-__prefix__-static_asset" data-href-template="/admin/static_assets/staticasset/__fk__/change/?_to_field=id" title="View selected static asset" aria-disabled="true" target="_blank" rel="noopener"><img src="/static/admin/img/icon-viewlink.41eb31f7826e.svg" alt="" width="24" height="24"></a>
+    
+</div>
+                                
+                            
+                        </div>
+                    
+                </div>
+            
+                <div>
+                    
+                        <div class="flex-container fieldBox field-preview_video_static_asset">
+                            
+                                <label class="inline" for="id_showcases-__prefix__-preview_video_static_asset">Preview video static asset:</label>
+                                
+                                    <div class="related-widget-wrapper" data-model-ref="staticasset">
+    <select name="showcases-__prefix__-preview_video_static_asset" id="id_showcases-__prefix__-preview_video_static_asset" class="admin-autocomplete" data-ajax--cache="true" data-ajax--delay="250" data-ajax--type="GET" data-ajax--url="/admin/autocomplete/" data-app-label="characters" data-model-name="charactershowcase" data-field-name="preview_video_static_asset" data-theme="admin-autocomplete" data-allow-clear="true" data-placeholder="" lang="en">
+  <option value=""></option>
+
+</select>
+    
+        <a class="related-widget-wrapper-link change-related" id="change_id_showcases-__prefix__-preview_video_static_asset" data-href-template="/admin/static_assets/staticasset/__fk__/change/?_to_field=id&amp;_popup=1" data-popup="yes" title="Change selected static asset" aria-disabled="true"><img src="/static/admin/img/icon-changelink.7eddb320e61f.svg" alt="" width="24" height="24"></a><a class="related-widget-wrapper-link add-related" id="add_id_showcases-__prefix__-preview_video_static_asset" data-popup="yes" href="/admin/static_assets/staticasset/add/?_to_field=id&amp;_popup=1" title="Add another static asset"><img src="/static/admin/img/icon-addlink.073aeb1feda7.svg" alt="" width="24" height="24"></a><a class="related-widget-wrapper-link delete-related us-artist-hidden" id="delete_id_showcases-__prefix__-preview_video_static_asset" data-href-template="/admin/static_assets/staticasset/__fk__/delete/?_to_field=id&amp;_popup=1" data-popup="yes" title="Delete selected static asset" aria-disabled="true"><img src="/static/admin/img/icon-deletelink.564ef9dc3854.svg" alt="" width="24" height="24"></a><a class="related-widget-wrapper-link view-related" id="view_id_showcases-__prefix__-preview_video_static_asset" data-href-template="/admin/static_assets/staticasset/__fk__/change/?_to_field=id" title="View selected static asset" aria-disabled="true" target="_blank" rel="noopener"><img src="/static/admin/img/icon-viewlink.41eb31f7826e.svg" alt="" width="24" height="24"></a>
+    
+</div>
+                                
+                            
+                        </div>
+                    
+                </div>
+            
+                <div>
+                    
+                        <div class="flex-container fieldBox field-preview_youtube_link">
+                            
+                                <label class="inline" for="id_showcases-__prefix__-preview_youtube_link">Preview youtube link:</label>
+                                
+                                    <input type="url" name="showcases-__prefix__-preview_youtube_link" class="vURLField" maxlength="200" id="id_showcases-__prefix__-preview_youtube_link">
+                                
+                            
+                        </div>
+                    
+                </div>
+            
+            </div>
+        </div>
+    
+    
+</fieldset>
+
+      
+        <fieldset class="module aligned ">
+    
+    
+    
+        <div class="form-row field-title field-description">
+            <div class="flex-container form-multiline">
+            
+                <div>
+                    
+                        <div class="flex-container fieldBox field-title">
+                            
+                                <label class="required" for="id_showcases-__prefix__-title">Title:</label>
+                                
+                                    <input type="text" name="showcases-__prefix__-title" class="vTextField" maxlength="512" id="id_showcases-__prefix__-title">
+                                
+                            
+                        </div>
+                    
+                </div>
+            
+                <div>
+                    
+                        <div class="flex-container fieldBox field-description">
+                            
+                                <label class="inline" for="id_showcases-__prefix__-description">Description:</label>
+                                
+                                    <textarea name="showcases-__prefix__-description" cols="40" rows="10" class="vLargeTextField" aria-describedby="id_showcases-__prefix__-description_helptext" id="id_showcases-__prefix__-description"></textarea>
+                                
+                            
+                        </div>
+                    
+                        <div class="help" id="id_showcases-__prefix__-description_helptext">
+                            <div>
+<p>
+    Format content in <a href="https://commonmark.org/help/" target="_blank">Markdown</a>. Use custom tags as documented in the <a href="https://sites.google.com/blender.org/hq-portal/communication/markdown-cheatsheet" target="_blank">Markdown Cheatsheet</a>.
+</p>
+</div>
+                        </div>
+                    
+                </div>
+            
+            </div>
+        </div>
+    
+    
+</fieldset>
+
+      
+      <input type="hidden" name="showcases-__prefix__-id" id="id_showcases-__prefix__-id">
+      <input type="hidden" name="showcases-__prefix__-character" value="52" id="id_showcases-__prefix__-character">
+    </div><div class="add-row"><a role="button" class="addlink" href="#">Add another Character showcase</a></div>
+  </fieldset>
+</div>
+
+
+
+
+
+
+
+<div class="submit-row"><input type="submit" value="Save" name="_continue" class="default us-save-button">
+
+<input type="submit" value="Save" class="default" name="_save" style="display: none;">
+
+<input type="submit" value="Save and add another" name="_addanother"><a href="/admin/characters/character/52/history/" class="historylink button" style="padding: 10px 15px; margin: 0px; line-height: 15px; font-size: 13px; vertical-align: middle;">History</a>
+
+
+
+    
+    <a href="/admin/characters/character/52/delete/" class="deletelink">Delete</a>
+
+
+</div>
+
+
+
+    <script id="django-admin-form-add-constants" src="/static/admin/js/change_form.9d8ca4f96b75.js" async="">
+    </script>
+
+
+
+
+<script id="django-admin-prepopulated-fields-constants" src="/static/admin/js/prepopulate_init.6cac7f3105b8.js" data-prepopulated-fields="[{&quot;id&quot;: &quot;#id_slug&quot;, &quot;name&quot;: &quot;slug&quot;, &quot;dependency_ids&quot;: [&quot;#id_name&quot;], &quot;dependency_list&quot;: [&quot;name&quot;], &quot;maxLength&quot;: 50, &quot;allowUnicode&quot;: false}]">
+</script>
+
+
+</div>
+</form></div>
+
+          
+          <br class="clear">
+        </div>
+        <!-- END Content -->
+      </main>
+    </div>
+    <footer id="footer"></footer>
+</div>
+<!-- END Container -->
+
+<!-- SVGs -->
+<svg xmlns="http://www.w3.org/2000/svg" class="base-svgs">
+  <symbol viewBox="0 0 24 24" width="1.5rem" height="1.5rem" id="icon-auto"><path d="M0 0h24v24H0z" fill="currentColor"></path><path d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10zm0-2V4a8 8 0 1 0 0 16z"></path></symbol>
+  <symbol viewBox="0 0 24 24" width="1.5rem" height="1.5rem" id="icon-moon"><path d="M0 0h24v24H0z" fill="currentColor"></path><path d="M10 7a7 7 0 0 0 12 4.9v.1c0 5.523-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2h.1A6.979 6.979 0 0 0 10 7zm-6 5a8 8 0 0 0 15.062 3.762A9 9 0 0 1 8.238 4.938 7.999 7.999 0 0 0 4 12z"></path></symbol>
+  <symbol viewBox="0 0 24 24" width="1.5rem" height="1.5rem" id="icon-sun"><path d="M0 0h24v24H0z" fill="currentColor"></path><path d="M12 18a6 6 0 1 1 0-12 6 6 0 0 1 0 12zm0-2a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM11 1h2v3h-2V1zm0 19h2v3h-2v-3zM3.515 4.929l1.414-1.414L7.05 5.636 5.636 7.05 3.515 4.93zM16.95 18.364l1.414-1.414 2.121 2.121-1.414 1.414-2.121-2.121zm2.121-14.85l1.414 1.415-2.121 2.121-1.414-1.414 2.121-2.121zM5.636 16.95l1.414 1.414-2.121 2.121-1.414-1.414 2.121-2.121zM23 11v2h-3v-2h3zM4 11v2H1v-2h3z"></path></symbol>
+</svg>
+<!-- END SVGs -->
+
+
+
+<div style="display: none; position: absolute;" class="calendarbox module" id="calendarbox0"><div><a href="#" class="calendarnav-previous">&lt;</a><a href="#" class="calendarnav-next">&gt;</a></div><div id="calendarin0" class="calendar"><table><caption>September 2026</caption><tbody><tr><th>S</th><th>M</th><th>T</th><th>W</th><th>T</th><th>F</th><th>S</th></tr><tr><td class="nonday"> </td><td class="nonday"> </td><td class=""><a href="#">1</a></td><td class=""><a href="#">2</a></td><td class=""><a href="#">3</a></td><td class=""><a href="#">4</a></td><td class=""><a href="#">5</a></td></tr><tr><td class=""><a href="#">6</a></td><td class=""><a href="#">7</a></td><td class=""><a href="#">8</a></td><td class=""><a href="#">9</a></td><td class="today"><a href="#">10</a></td><td class=""><a href="#">11</a></td><td class=""><a href="#">12</a></td></tr><tr><td class=""><a href="#">13</a></td><td class=""><a href="#">14</a></td><td class=""><a href="#">15</a></td><td class=""><a href="#">16</a></td><td class=""><a href="#">17</a></td><td class=""><a href="#">18</a></td><td class=""><a href="#">19</a></td></tr><tr><td class=""><a href="#">20</a></td><td class=""><a href="#">21</a></td><td class=""><a href="#">22</a></td><td class=""><a href="#">23</a></td><td class=""><a href="#">24</a></td><td class=""><a href="#">25</a></td><td class=""><a href="#">26</a></td></tr><tr><td class=""><a href="#">27</a></td><td class=""><a href="#">28</a></td><td class=""><a href="#">29</a></td><td class=""><a href="#">30</a></td><td class="nonday"> </td><td class="nonday"> </td><td class="nonday"> </td></tr></tbody></table></div><div class="calendar-shortcuts"><a href="#">Yesterday</a>&nbsp;|&nbsp;<a href="#">Today</a>&nbsp;|&nbsp;<a href="#">Tomorrow</a></div><p class="calendar-cancel"><a href="#">Cancel</a></p></div><div style="display: none; position: absolute;" class="clockbox module" id="clockbox0"><h2>Choose a time</h2><ul class="timelist"><li><a href="#">Now</a></li><li><a href="#">Midnight</a></li><li><a href="#">6 a.m.</a></li><li><a href="#">Noon</a></li><li><a href="#">6 p.m.</a></li></ul><p class="calendar-cancel"><a href="#">Cancel</a></p></div><div style="display: none; position: absolute;" class="calendarbox module" id="calendarbox1"><div><a href="#" class="calendarnav-previous">&lt;</a><a href="#" class="calendarnav-next">&gt;</a></div><div id="calendarin1" class="calendar"><table><caption>September 2026</caption><tbody><tr><th>S</th><th>M</th><th>T</th><th>W</th><th>T</th><th>F</th><th>S</th></tr><tr><td class="nonday"> </td><td class="nonday"> </td><td class=""><a href="#">1</a></td><td class=""><a href="#">2</a></td><td class=""><a href="#">3</a></td><td class=""><a href="#">4</a></td><td class=""><a href="#">5</a></td></tr><tr><td class=""><a href="#">6</a></td><td class=""><a href="#">7</a></td><td class=""><a href="#">8</a></td><td class=""><a href="#">9</a></td><td class="today"><a href="#">10</a></td><td class=""><a href="#">11</a></td><td class=""><a href="#">12</a></td></tr><tr><td class=""><a href="#">13</a></td><td class=""><a href="#">14</a></td><td class=""><a href="#">15</a></td><td class=""><a href="#">16</a></td><td class=""><a href="#">17</a></td><td class=""><a href="#">18</a></td><td class=""><a href="#">19</a></td></tr><tr><td class=""><a href="#">20</a></td><td class=""><a href="#">21</a></td><td class=""><a href="#">22</a></td><td class=""><a href="#">23</a></td><td class=""><a href="#">24</a></td><td class=""><a href="#">25</a></td><td class=""><a href="#">26</a></td></tr><tr><td class=""><a href="#">27</a></td><td class=""><a href="#">28</a></td><td class=""><a href="#">29</a></td><td class=""><a href="#">30</a></td><td class="nonday"> </td><td class="nonday"> </td><td class="nonday"> </td></tr></tbody></table></div><div class="calendar-shortcuts"><a href="#">Yesterday</a>&nbsp;|&nbsp;<a href="#">Today</a>&nbsp;|&nbsp;<a href="#">Tomorrow</a></div><p class="calendar-cancel"><a href="#">Cancel</a></p></div><div style="display: none; position: absolute;" class="clockbox module" id="clockbox1"><h2>Choose a time</h2><ul class="timelist"><li><a href="#">Now</a></li><li><a href="#">Midnight</a></li><li><a href="#">6 a.m.</a></li><li><a href="#">Noon</a></li><li><a href="#">6 p.m.</a></li></ul><p class="calendar-cancel"><a href="#">Cancel</a></p></div><div style="display: none; position: absolute;" class="calendarbox module" id="calendarbox2"><div><a href="#" class="calendarnav-previous">&lt;</a><a href="#" class="calendarnav-next">&gt;</a></div><div id="calendarin2" class="calendar"><table><caption>September 2026</caption><tbody><tr><th>S</th><th>M</th><th>T</th><th>W</th><th>T</th><th>F</th><th>S</th></tr><tr><td class="nonday"> </td><td class="nonday"> </td><td class=""><a href="#">1</a></td><td class=""><a href="#">2</a></td><td class=""><a href="#">3</a></td><td class=""><a href="#">4</a></td><td class=""><a href="#">5</a></td></tr><tr><td class=""><a href="#">6</a></td><td class=""><a href="#">7</a></td><td class=""><a href="#">8</a></td><td class=""><a href="#">9</a></td><td class="today"><a href="#">10</a></td><td class=""><a href="#">11</a></td><td class=""><a href="#">12</a></td></tr><tr><td class=""><a href="#">13</a></td><td class=""><a href="#">14</a></td><td class=""><a href="#">15</a></td><td class=""><a href="#">16</a></td><td class=""><a href="#">17</a></td><td class=""><a href="#">18</a></td><td class=""><a href="#">19</a></td></tr><tr><td class=""><a href="#">20</a></td><td class=""><a href="#">21</a></td><td class=""><a href="#">22</a></td><td class=""><a href="#">23</a></td><td class=""><a href="#">24</a></td><td class=""><a href="#">25</a></td><td class=""><a href="#">26</a></td></tr><tr><td class=""><a href="#">27</a></td><td class=""><a href="#">28</a></td><td class=""><a href="#">29</a></td><td class=""><a href="#">30</a></td><td class="nonday"> </td><td class="nonday"> </td><td class="nonday"> </td></tr></tbody></table></div><div class="calendar-shortcuts"><a href="#">Yesterday</a>&nbsp;|&nbsp;<a href="#">Today</a>&nbsp;|&nbsp;<a href="#">Tomorrow</a></div><p class="calendar-cancel"><a href="#">Cancel</a></p></div><div style="display: none; position: absolute;" class="clockbox module" id="clockbox2"><h2>Choose a time</h2><ul class="timelist"><li><a href="#">Now</a></li><li><a href="#">Midnight</a></li><li><a href="#">6 a.m.</a></li><li><a href="#">Noon</a></li><li><a href="#">6 p.m.</a></li></ul><p class="calendar-cancel"><a href="#">Cancel</a></p></div><div style="display: none; position: absolute;" class="calendarbox module" id="calendarbox3"><div><a href="#" class="calendarnav-previous">&lt;</a><a href="#" class="calendarnav-next">&gt;</a></div><div id="calendarin3" class="calendar"><table><caption>September 2026</caption><tbody><tr><th>S</th><th>M</th><th>T</th><th>W</th><th>T</th><th>F</th><th>S</th></tr><tr><td class="nonday"> </td><td class="nonday"> </td><td class=""><a href="#">1</a></td><td class=""><a href="#">2</a></td><td class=""><a href="#">3</a></td><td class=""><a href="#">4</a></td><td class=""><a href="#">5</a></td></tr><tr><td class=""><a href="#">6</a></td><td class=""><a href="#">7</a></td><td class=""><a href="#">8</a></td><td class=""><a href="#">9</a></td><td class="today"><a href="#">10</a></td><td class=""><a href="#">11</a></td><td class=""><a href="#">12</a></td></tr><tr><td class=""><a href="#">13</a></td><td class=""><a href="#">14</a></td><td class=""><a href="#">15</a></td><td class=""><a href="#">16</a></td><td class=""><a href="#">17</a></td><td class=""><a href="#">18</a></td><td class=""><a href="#">19</a></td></tr><tr><td class=""><a href="#">20</a></td><td class=""><a href="#">21</a></td><td class=""><a href="#">22</a></td><td class=""><a href="#">23</a></td><td class=""><a href="#">24</a></td><td class=""><a href="#">25</a></td><td class=""><a href="#">26</a></td></tr><tr><td class=""><a href="#">27</a></td><td class=""><a href="#">28</a></td><td class=""><a href="#">29</a></td><td class=""><a href="#">30</a></td><td class="nonday"> </td><td class="nonday"> </td><td class="nonday"> </td></tr></tbody></table></div><div class="calendar-shortcuts"><a href="#">Yesterday</a>&nbsp;|&nbsp;<a href="#">Today</a>&nbsp;|&nbsp;<a href="#">Tomorrow</a></div><p class="calendar-cancel"><a href="#">Cancel</a></p></div><div style="display: none; position: absolute;" class="clockbox module" id="clockbox3"><h2>Choose a time</h2><ul class="timelist"><li><a href="#">Now</a></li><li><a href="#">Midnight</a></li><li><a href="#">6 a.m.</a></li><li><a href="#">Noon</a></li><li><a href="#">6 p.m.</a></li></ul><p class="calendar-cancel"><a href="#">Cancel</a></p></div></body></html>

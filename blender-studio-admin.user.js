@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Blender Studio Admin: UX Tweaks
 // @namespace    https://studio.blender.org/
-// @version      2.49
+// @version      2.51
 // @description  Collapsible panels, tab-not-popup links, Preview panel, entry cleanup for the Django admin
 // @match        https://studio.blender.org/admin/*
 // @grant        none
@@ -557,8 +557,8 @@
     document.querySelectorAll('#staticasset_form fieldset .description').forEach((d) => d.remove());
 
     // Artist Mode strips this page down to the few fields worth an artist's attention: Source,
-    // Free and Original filename here, plus Loop / Autoplay in the video fieldset. Everything
-    // else is dev/debug detail.
+    // Thumbnail, Free and Original filename here, plus Loop / Autoplay in the video fieldset.
+    // Everything else is dev/debug detail.
     document.querySelector('.fieldBox.field-source_storage')?.parentElement
       ?.classList.add('us-artist-hidden');
     [
@@ -567,13 +567,17 @@
       '.form-row.field-source_type.field-content_type',
       '.form-row.field-user.field-author.field-contributors',
       '.form-row.field-license',
-      '.form-row.field-thumbnail.field-render_thumbnails',
       '.form-row.field-date_created.field-view_count.field-download_count',
       '.form-row.field-linked_by',
       '.form-row.field-width.field-height.field-resolution_label',
       '.form-row.field-duration',
       '.form-row.field-metadata',
     ].forEach(hideRowFoldingEmptyFieldset);
+
+    // Thumbnail stays visible - lift it up to sit right under Source.
+    const sourceRow = document.querySelector('#staticasset_form .form-row.field-source');
+    const thumbRow = document.querySelector('#staticasset_form .form-row.field-thumbnail');
+    if (sourceRow && thumbRow) sourceRow.insertAdjacentElement('afterend', thumbRow);
 
     // Video variations / Video tracks are read-only transcode detail - fold the whole panels.
     ['variations-group', 'tracks-group'].forEach((id) => {
@@ -862,6 +866,17 @@
         'is_featured', 'tags', 'user']],
     ]);
     document.querySelector('#section_form .form-row.field-user')?.classList.add('us-artist-hidden');
+  }
+
+  function cleanupCharacterPage() {
+    const form = document.getElementById('character_form');
+    if (!form) return;
+
+    // One flat fieldset of six loose rows - fold them into a single panel, led by the
+    // identity fields, then grouping, ordering and publication state.
+    panelizeForm(form, [
+      ['Character', ['name', 'slug', 'project', 'order', 'is_published', 'date_published']],
+    ]);
   }
 
   function dropRedundantTopSubmitRow() {
@@ -1369,6 +1384,7 @@
     safe(cleanupChapterPage);
     safe(cleanupTrainingPage);
     safe(cleanupSectionPage);
+    safe(cleanupCharacterPage);
     safe(hideRedundantPageTitle);
     safe(initArtistModeToggle);
     safe(initTopLevelPanels);
