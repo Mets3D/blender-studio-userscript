@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Blender Studio Admin: UX Tweaks
 // @namespace    https://studio.blender.org/
-// @version      2.51
+// @version      2.56
 // @description  Collapsible panels, tab-not-popup links, Preview panel, entry cleanup for the Django admin
 // @match        https://studio.blender.org/admin/*
 // @grant        none
@@ -33,6 +33,19 @@
   window.open = function (url, name) {
     return nativeOpen.call(window, url, name);
   };
+
+  // productionlogentry changelist defaults to oldest-first with no way to sort by date. Column
+  // 1 ("Production log entry") is DB-sortable (its header links to ?o=1), and since __str__
+  // itself can't be a sort key its admin_order_field is some real chronological column - so
+  // ?o=-1 (that column, descending) is our best shot at global newest-first. If the order ends
+  // up wrong, change the '-1' here (and the check in enhanceProductionLogEntryList) or drop it.
+  if (location.pathname.endsWith('/projects/productionlogentry/')) {
+    const params = new URLSearchParams(location.search);
+    if (!params.has('o')) {
+      params.set('o', '-1');
+      location.replace(location.pathname + '?' + params.toString());
+    }
+  }
 
   function makeCollapsible(container, heading, key) {
     if (container.dataset.usCollapsible) return;
@@ -529,6 +542,93 @@
     });
   }
 
+  // The productionlogentry changelist has no date column, starts oldest-first, and its two
+  // columns are a redundant pair: the entry title is "<project>: <author>'s Production Log
+  // Entry <date>" and the "Production log" cell is "<project> Production Logs <date>" with no
+  // link. Split date + project into their own client-sortable columns, shorten the title to
+  // "<author>: <date>", and drop the dead Production log column. Client sort only reaches the
+  // visible page; the ?o=-1 redirect (top of file) gets recent rows onto page 1.
+  function enhanceProductionLogEntryList() {
+    if (!location.pathname.endsWith('/projects/productionlogentry/')) return;
+    const table = document.getElementById('result_list');
+    const headRow = table?.querySelector('thead > tr');
+    const tbody = table?.querySelector('tbody');
+    if (!headRow || !tbody || headRow.dataset.usEnhanced) return;
+
+    // Project may itself contain ": " ("Cosmos Laundromat: First Cycle"), so anchor on the
+    // fixed "'s Production Log Entry <date>" tail; the author is the last ": "-delimited
+    // segment before it.
+    const titleRe = /^(.*):\s*(.+?)['’]s Production Log Entry\s+(\d{4}-\d{2}-\d{2})\s*$/;
+    const parsed = [...tbody.querySelectorAll('tr')].map((tr) => {
+      const cell = tr.querySelector('.field-__str__');
+      const link = cell?.querySelector('a') || cell;
+      return { tr, link, m: link?.textContent.trim().match(titleRe) };
+    });
+    if (!parsed.some((p) => p.m)) return;
+    headRow.dataset.usEnhanced = 'true';
+
+    parsed.forEach(({ tr, link, m }) => {
+      const [, project, author, date] = m || [];
+      tr.dataset.usDate = date || '';
+      tr.dataset.usProject = project || '';
+
+      const dateTd = document.createElement('td');
+      dateTd.className = 'field-us_date nowrap';
+      dateTd.textContent = date || '';
+      const projTd = document.createElement('td');
+      projTd.className = 'field-us_project';
+      projTd.textContent = project || '';
+      (tr.querySelector('td.action-checkbox') || tr.firstElementChild)?.after(dateTd, projTd);
+
+      if (m && link.tagName === 'A') link.textContent = `${author}: ${date}`;
+      tr.querySelector('td.field-production_log')?.remove();
+    });
+
+    headRow.querySelector('th.column-production_log')?.remove();
+    const strLink = headRow.querySelector('th.column-__str__ .text a');
+    if (strLink) strLink.textContent = 'Entry';
+
+    const sorters = {};
+    let current = { key: null, desc: true };
+    function sortRows(key, desc) {
+      [...tbody.querySelectorAll('tr')]
+        .sort((a, b) => {
+          const c = (a.dataset[key] || '').localeCompare(b.dataset[key] || '');
+          return desc ? -c : c;
+        })
+        .forEach((r, i) => {
+          tbody.appendChild(r);
+          r.classList.remove('row1', 'row2');
+          r.classList.add(i % 2 ? 'row2' : 'row1');
+        });
+      current = { key, desc };
+      Object.entries(sorters).forEach(([k, s]) => {
+        s.a.textContent = s.label + (k === key ? (desc ? ' ▼' : ' ▲') : '');
+      });
+    }
+    function addSortHeader(label, key, afterEl) {
+      const th = document.createElement('th');
+      th.scope = 'col';
+      th.className = 'sortable column-' + key;
+      th.innerHTML = '<div class="text"><a href="#"></a></div><div class="clear"></div>';
+      const a = th.querySelector('a');
+      a.textContent = label;
+      a.addEventListener('click', (e) => {
+        e.preventDefault();
+        sortRows(key, current.key === key ? !current.desc : true);
+      });
+      sorters[key] = { a, label };
+      afterEl.after(th);
+    }
+
+    const chkTh = headRow.querySelector('th.action-checkbox-column') || headRow.firstElementChild;
+    addSortHeader('Project', 'usProject', chkTh);
+    addSortHeader('Date', 'usDate', chkTh);   // inserted after the checkbox, ends up before Project
+
+    const o = new URLSearchParams(location.search).get('o');
+    if (!o || o === '-1') sortRows('usDate', true);
+  }
+
   function cleanupCollectionPage() {
     if (!location.pathname.includes('/projects/collection/')) return;
 
@@ -876,6 +976,48 @@
     // identity fields, then grouping, ordering and publication state.
     panelizeForm(form, [
       ['Character', ['name', 'slug', 'project', 'order', 'is_published', 'date_published']],
+    ]);
+  }
+
+  function cleanupProjectPage() {
+    const form = document.getElementById('project_form');
+    if (!form) return;
+
+    // Help text -> hover tooltips. Checkbox rows hang the tip on .checkbox-row, the two
+    // image rows that share a row with "Resized/cropped" hang it on their own .fieldBox,
+    // everything else on the field's .flex-container.
+    [
+      ['id_tag_line_helptext', '.form-row.field-tag_line .flex-container'],
+      ['id_logo_helptext', '.form-row.field-logo .flex-container'],
+      ['id_poster_helptext', '.fieldBox.field-poster'],
+      ['id_picture_header_helptext', '.form-row.field-picture_header .flex-container'],
+      ['id_thumbnail_helptext', '.fieldBox.field-thumbnail'],
+      ['id_header_link_helptext', '.form-row.field-header_link .flex-container'],
+      ['id_header_link_text_helptext', '.form-row.field-header_link_text .flex-container'],
+      ['id_youtube_link_helptext', '.form-row.field-youtube_link .flex-container'],
+      ['id_show_content_gallery_nav_link_helptext', '.form-row.field-show_content_gallery_nav_link .checkbox-row'],
+      ['id_show_production_logs_nav_link_helptext', '.form-row.field-show_production_logs_nav_link .checkbox-row'],
+      ['id_show_production_logs_as_featured_helptext', '.form-row.field-show_production_logs_as_featured .checkbox-row'],
+      ['id_show_blog_posts_helptext', '.form-row.field-show_blog_posts .checkbox-row'],
+      ['id_show_landing_page_helptext', '.form-row.field-show_landing_page .checkbox-row'],
+      ['id_landing_page_template_helptext', '.form-row.field-landing_page_template .flex-container'],
+    ].forEach(([id, sel]) => moveHelpToTooltip(id, sel));
+
+    // The poster's "Resized/cropped" previews are dev noise, same as field-render_thumbnails
+    // (which cleanupPreviewFields already handles) - the poster's variant isn't covered there.
+    document.querySelector('.fieldBox.field-render_poster_thumbnails')?.parentElement
+      ?.classList.add('us-artist-hidden');
+
+    // One long flat fieldset -> the usual panels, plus a "Project page" panel for the hero
+    // call-to-action link and the toggles that decide what the public project page renders.
+    panelizeForm(form, [
+      ['Content', ['title', 'slug', 'tag_line', 'description', 'summary']],
+      ['Attachments', ['logo', 'poster', 'picture_header', 'thumbnail']],
+      ['Organization', ['category', 'status', 'release_date', 'is_published', 'is_featured']],
+      ['Project page', ['header_link', 'header_link_text', 'youtube_link',
+        'show_content_gallery_nav_link', 'show_production_logs_nav_link',
+        'show_production_logs_as_featured', 'show_blog_posts', 'show_landing_page',
+        'landing_page_template']],
     ]);
   }
 
@@ -1379,12 +1521,14 @@
     safe(cleanupDatePublished);
     safe(hideTopLevelAuthor);
     safe(cleanupProductionLogEntryFields);
+    safe(enhanceProductionLogEntryList);
     safe(cleanupCollectionPage);
     safe(cleanupStaticAssetPage);
     safe(cleanupChapterPage);
     safe(cleanupTrainingPage);
     safe(cleanupSectionPage);
     safe(cleanupCharacterPage);
+    safe(cleanupProjectPage);
     safe(hideRedundantPageTitle);
     safe(initArtistModeToggle);
     safe(initTopLevelPanels);
